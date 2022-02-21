@@ -2,5 +2,4 @@
 
 **How to compile**  
 
-``chmod +x compile.sh    
-./compile.sh ``
+`chmod +x compile.sh && ./compile.sh`
