@@ -9,7 +9,7 @@ libgl
 glew  
 
 installing them on arch linux:  
-`sudo pacman -S sdl2 libusb hidapi glew libgl`  
+`sudo pacman -S sdl2 libusb hidapi glew libgl base-devel`  
 
 **How to compile**  
 
