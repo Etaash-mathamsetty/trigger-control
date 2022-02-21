@@ -15,4 +15,7 @@ installing them on arch linux:
 
 `chmod +x compile.sh && ./compile.sh`  
 
+**run**   
+`./trigger-control`  
+
 based on https://github.com/flok/pydualsense
