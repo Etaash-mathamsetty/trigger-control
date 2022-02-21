@@ -1,6 +1,6 @@
 # trigger control  
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux using a gui  
-libraries: 
+libraries:  
 libusb  
 libSDL2  
 libhidapi  
