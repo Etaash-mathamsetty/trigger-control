@@ -11,6 +11,11 @@
 #include "icon.h"
 #include <iostream>
 //#include <ncurses.h>
+//SUPER IMPORTANT: https://github.com/Ryochan7/DS4Windows/blob/jay/DS4Windows/DS4Library/InputDevices/DualSenseDevice.cs
+//TODO: increase array length to 78 for bluetooth
+//TODO: implement CRC for bluetooth
+
+//WISH: autodetect bluetooth
 
 enum dualsense_modes{
     Off = 0x0, //# no resistance
@@ -80,6 +85,7 @@ int main(int argc, char **argv) {
 	struct hid_device_info *devs, *cur_dev;
 		devs = hid_enumerate(0x0,0x0);
 		cur_dev = devs;
+		bool bt = false;
 		char* path = NULL;
 		while (cur_dev) {
 			if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
@@ -96,7 +102,7 @@ int main(int argc, char **argv) {
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
 			exit(EXIT_FAILURE);
 		}
-
+		printf("%d\n",bt);
 		free(path);
 		bool running = true;
 		//SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
@@ -136,9 +142,14 @@ int main(int argc, char **argv) {
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always, ImVec2(0,0));
 	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 
+	    ImGui::Checkbox("Using Bluetooth?",&bt);
+
 	    if(ImGui::Button("Reset")){
 		    memset(outReport, 0, 65);
+		    if(!bt)
 		    outReport[0] = 0x2;
+		    if(bt)
+		    outReport[0] = 0x31; //thx ds4windows
 		    outReport[1] = 0x04 | 0x08;
 			outReport[2] = 0x40;
 			hid_write(handle,outReport,65);
@@ -148,45 +159,49 @@ int main(int argc, char **argv) {
 	    }
 
 	    ImGui::Text("Right Trigger:");
-	    ImGui::ListBox("right mode", &right_cur, states, IM_ARRAYSIZE(states));
+	    ImGui::ListBox("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 	    outReport[11] = get_mode(right_cur);
 	    int arr[7] = {0};
 	    for(int i = 0; i < 6; i++){
 	    	 arr[i] = outReport[i + 12];
 	    }
 	    arr[6] = outReport[20];
-	    ImGui::SliderInt("rvalue 1", (int*)&arr[0], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 2", (int*)&arr[1], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 3", (int*)&arr[2], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 4", (int*)&arr[3], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 5", (int*)&arr[4], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 6", (int*)&arr[5], 0, 255, "%d", 0);
-	    ImGui::SliderInt("rvalue 7", (int*)&arr[6], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Start Resistance", (int*)&arr[0], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Effect Force", (int*)&arr[1], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Range Force", (int*)&arr[2], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Near Release Strength", (int*)&arr[3], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Near Middle Strength", (int*)&arr[4], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Pressed Strength", (int*)&arr[5], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Right Actuation Frequency", (int*)&arr[6], 0, 255, "%d", 0);
 	    for(int i = 0; i < 6; i++){
 	    	outReport[i + 12] = arr[i];
 	    }
 	    outReport[20] = arr[6];
 	    ImGui::Text("Left Trigger:");
-	    ImGui::ListBox("left mode", &left_cur, states, IM_ARRAYSIZE(states));
+	    ImGui::ListBox("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
 	    outReport[22] = get_mode(left_cur);
 	    int arr2[7] = {0};
 	    for(int i = 0; i < 6; i++){
 	    	 arr2[i] = outReport[i + 23];
 	    }
 	    arr2[6] = outReport[31];
-	    ImGui::SliderInt("lvalue 1", (int*)&arr2[0], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 2", (int*)&arr2[1], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 3", (int*)&arr2[2], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 4", (int*)&arr2[3], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 5", (int*)&arr2[4], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 6", (int*)&arr2[5], 0, 255, "%d", 0);
-	    ImGui::SliderInt("lvalue 7", (int*)&arr2[6], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Start Resistance", (int*)&arr2[0], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Effect Force", (int*)&arr2[1], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Range Force", (int*)&arr2[2], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Near Release Strength", (int*)&arr2[3], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Near Middle Strength", (int*)&arr2[4], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Pressed Strength", (int*)&arr2[5], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Actuation Frequency", (int*)&arr2[6], 0, 255, "%d", 0);
 	    for(int i = 0; i < 6; i++){
 	    	outReport[i + 23] = arr2[i];
 	    }
 	    outReport[31] = arr2[6];
 	    if(ImGui::Button("Apply")){
 	    	printf("applied!\n");
+	    	if(bt)
+	    		outReport[0] = 0x31;
+	    	else
+	    		outReport[0] = 0x02;
 	    	hid_write(handle,outReport,65);
 	    }
 
