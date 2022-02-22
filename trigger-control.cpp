@@ -103,6 +103,14 @@ int main(int argc, char **argv) {
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
 			exit(EXIT_FAILURE);
 		}
+				uint8_t buf[20] = {0};
+		buf[0] = 0x09;
+		int _res = hid_get_feature_report(handle, buf, 20);
+	    if (_res != sizeof(buf)) {
+	        fprintf(stderr, "Invalid feature report\n");
+	        //return false;
+	    }
+		bt = *(uint32_t*)&buf[16] != 0;
 		printf("%d\n",bt);
 		free(path);
 		bool running = true;
