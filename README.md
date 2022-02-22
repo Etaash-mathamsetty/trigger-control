@@ -18,4 +18,6 @@ installing them on arch linux:
 **run**   
 `./trigger-control`  
 
-based on https://github.com/flok/pydualsense
+TODO: CRC for bluetooth
+
+based on https://github.com/flok/pydualsense  
