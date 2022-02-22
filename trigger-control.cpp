@@ -68,7 +68,8 @@ int main(int argc, char **argv) {
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
 	SDL_Surface* surface;
-	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );	SDL_SetWindowIcon(window, surface);
+	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );	
+	SDL_SetWindowIcon(window, surface);
 
 	  // ...and the surface containing the icon pixel data is no longer required.
 	  SDL_FreeSurface(surface);
