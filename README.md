@@ -1,6 +1,6 @@
 # trigger control  
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux using a gui  
-~~currently only works through usb though the controller is detected through bluetooth  
+~~currently only works through usb though the controller is detected through bluetooth~~  
 
 now works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)
 
