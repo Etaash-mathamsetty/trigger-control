@@ -11,12 +11,8 @@
 #include "icon.h"
 #include "crc32.h"
 #include <iostream>
-//#include <ncurses.h>
-//SUPER IMPORTANT: https://github.com/Ryochan7/DS4Windows/blob/jay/DS4Windows/DS4Library/InputDevices/DualSenseDevice.cs
-//TODO: increase array length to 78 for bluetooth
-//TODO: implement CRC for bluetooth
 
-//WISH: autodetect bluetooth
+
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
     Off = 0x0, //# no resistance
