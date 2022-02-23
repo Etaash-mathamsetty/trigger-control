@@ -9,6 +9,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "icon.h"
+#include "crc32.h"
 #include <iostream>
 //#include <ncurses.h>
 //SUPER IMPORTANT: https://github.com/Ryochan7/DS4Windows/blob/jay/DS4Windows/DS4Library/InputDevices/DualSenseDevice.cs
@@ -16,7 +17,7 @@
 //TODO: implement CRC for bluetooth
 
 //WISH: autodetect bluetooth
-
+const uint8_t seed = 0xA2;
 enum dualsense_modes{
     Off = 0x0, //# no resistance
     Rigid = 0x1, //# continous resistance
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
 	SDL_Surface* surface;
-	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );	
+	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );
 	SDL_SetWindowIcon(window, surface);
 
 	  // ...and the surface containing the icon pixel data is no longer required.
@@ -98,12 +99,13 @@ int main(int argc, char **argv) {
 			}
 			hid_free_enumeration(devs);
 		hid_device *handle = hid_open_path(path);
+		//hid_get_feature_report(handle, data, length)
 		if(handle == NULL){
 			error_sound();
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
 			exit(EXIT_FAILURE);
 		}
-				uint8_t buf[20] = {0};
+		uint8_t buf[20] = {0};
 		buf[0] = 0x09;
 		int _res = hid_get_feature_report(handle, buf, 20);
 	    if (_res != sizeof(buf)) {
@@ -115,12 +117,20 @@ int main(int argc, char **argv) {
 		free(path);
 		bool running = true;
 		//SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
-		uint8_t* outReport = new uint8_t[65];
-	    memset(outReport, 0, 65);
-	    outReport[0] = 0x2;
-	    outReport[1] = 0x04 | 0x08;
-		outReport[2] = 0x40;
-		const char* states[9] = {"Off","Rigid","Pulse","RigidA","RigidB","RigidAB","PulseA","PulseB","PulseAB"};
+		uint8_t* outReport = new uint8_t[78];
+	    memset(outReport, 0, 78);
+	    if(!bt){
+	   		    outReport[0] = 0x2;
+	   		    outReport[1] = 0x04 | 0x08;
+	   		    outReport[2] = 0x40;
+	   		    }
+	   		    if(bt){
+	   		    outReport[0] = 0x31; //thx ds4windows
+	   		    outReport[1] = 0x2;
+	   		    outReport[2] = 0x04 | 0x08;
+	   			outReport[3] = 0x40;
+	   		    }
+		const char* states[9] = {"Off","Rigid","Pulse","RigidA","RigidB (retracts)","RigidAB","PulseA","PulseB (retracts)","PulseAB"};
 		int left_cur = 0;
 		int right_cur = 0;
 	while(running){
@@ -154,14 +164,37 @@ int main(int argc, char **argv) {
 	    ImGui::Checkbox("Using Bluetooth?",&bt);
 
 	    if(ImGui::Button("Reset")){
-		    memset(outReport, 0, 65);
-		    if(!bt)
+		    memset(outReport, 0, 78);
+		    if(!bt){
 		    outReport[0] = 0x2;
-		    if(bt)
-		    outReport[0] = 0x31; //thx ds4windows
 		    outReport[1] = 0x04 | 0x08;
-			outReport[2] = 0x40;
-			hid_write(handle,outReport,65);
+		    outReport[2] = 0x40;
+		    }
+		    if(bt){
+		    outReport[0] = 0x31; //thx ds4windows
+		    outReport[1] = 0x2;
+		    outReport[2] = 0x04 | 0x08;
+			outReport[3] = 0x40;
+		    }
+			if(!bt){
+			int res = hid_write(handle,outReport,65);
+	    	if(res < 0)
+	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+	    	}
+			else{
+
+				unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
+				crc = ~crc32_le(crc, outReport, 74);
+				printf("crc: %u\n", crc);
+                outReport[74] = (uint8_t)crc;
+                outReport[75] = (uint8_t)(crc >> 8);
+                outReport[76] = (uint8_t)(crc >> 16);
+                outReport[77] = (uint8_t)(crc >> 24);
+				int res = hid_write(handle,outReport, 78);
+		    	if(res < 0)
+		    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+
+			}
 			left_cur = 0;
 			right_cur = 0;
 			printf("reset!\n");
@@ -169,12 +202,12 @@ int main(int argc, char **argv) {
 
 	    ImGui::Text("Right Trigger:");
 	    ImGui::ListBox("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-	    outReport[11] = get_mode(right_cur);
+	    outReport[11 + bt] = get_mode(right_cur);
 	    int arr[7] = {0};
 	    for(int i = 0; i < 6; i++){
-	    	 arr[i] = outReport[i + 12];
+	    	 arr[i] = outReport[i + 12 + bt];
 	    }
-	    arr[6] = outReport[20];
+	    arr[6] = outReport[20 + bt];
 	    ImGui::SliderInt("Right Start Resistance", (int*)&arr[0], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Right Effect Force", (int*)&arr[1], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Right Range Force", (int*)&arr[2], 0, 255, "%d", 0);
@@ -183,17 +216,17 @@ int main(int argc, char **argv) {
 	    ImGui::SliderInt("Right Pressed Strength", (int*)&arr[5], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Right Actuation Frequency", (int*)&arr[6], 0, 255, "%d", 0);
 	    for(int i = 0; i < 6; i++){
-	    	outReport[i + 12] = arr[i];
+	    	outReport[i + 12 + bt] = arr[i];
 	    }
-	    outReport[20] = arr[6];
+	    outReport[20 + bt] = arr[6];
 	    ImGui::Text("Left Trigger:");
 	    ImGui::ListBox("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-	    outReport[22] = get_mode(left_cur);
+	    outReport[22 + bt] = get_mode(left_cur);
 	    int arr2[7] = {0};
 	    for(int i = 0; i < 6; i++){
-	    	 arr2[i] = outReport[i + 23];
+	    	 arr2[i] = outReport[i + 23 + bt];
 	    }
-	    arr2[6] = outReport[31];
+	    arr2[6] = outReport[31 + bt];
 	    ImGui::SliderInt("Left Start Resistance", (int*)&arr2[0], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Left Effect Force", (int*)&arr2[1], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Left Range Force", (int*)&arr2[2], 0, 255, "%d", 0);
@@ -202,16 +235,39 @@ int main(int argc, char **argv) {
 	    ImGui::SliderInt("Left Pressed Strength", (int*)&arr2[5], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Left Actuation Frequency", (int*)&arr2[6], 0, 255, "%d", 0);
 	    for(int i = 0; i < 6; i++){
-	    	outReport[i + 23] = arr2[i];
+	    	outReport[i + 23 + bt] = arr2[i];
 	    }
-	    outReport[31] = arr2[6];
+	    outReport[31 + bt] = arr2[6];
 	    if(ImGui::Button("Apply")){
-	    	printf("applied!\n");
-	    	if(bt)
-	    		outReport[0] = 0x31;
-	    	else
-	    		outReport[0] = 0x02;
-	    	hid_write(handle,outReport,65);
+	    	printf("applied! bt: %d\n", bt);
+	    	 if(!bt){
+	    			    outReport[0] = 0x2;
+	    			    outReport[1] = 0x04 | 0x08;
+	    			    outReport[2] = 0x40;
+	    			    }
+	    			    if(bt){
+	    			    outReport[0] = 0x31; //thx ds4windows
+	    			    outReport[1] = 0x2;
+	    			    outReport[2] = 0x04 | 0x08;
+	    				outReport[3] = 0x40;
+	    			    }
+	    	if(!bt){
+	    	int res = hid_write(handle,outReport,65);
+	    	if(res < 0)
+	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+	    	}
+	    	else{
+	    		unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
+	    						crc = ~crc32_le(crc, outReport, 74);
+	    						printf("crc: %u\n", crc);
+                outReport[74] = (uint8_t)crc;
+                outReport[75] = (uint8_t)(crc >> 8);
+                outReport[76] = (uint8_t)(crc >> 16);
+                outReport[77] = (uint8_t)(crc >> 24);
+	    	int res = hid_write(handle, outReport,78);
+	    	if(res < 0)
+	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+	    	}
 	    }
 
 	    ImGui::End();
