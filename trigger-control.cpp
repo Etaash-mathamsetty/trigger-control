@@ -12,7 +12,6 @@
 #include "crc32.h"
 #include <iostream>
 
-
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
     Off = 0x0, //# no resistance
@@ -140,8 +139,13 @@ int main(int argc, char **argv) {
 		    	   running = false;
 		        }
 		    }
-
-
+		const wchar_t* error = hid_error(handle);
+		if(wcscmp(error, L"Success") != 0){
+			char* arr = (char*)alloca(wcslen(error));
+			sprintf(arr, "%ls", error);
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR",arr,window);
+			exit(EXIT_FAILURE);
+		}
 		int height, width;
 		SDL_GetWindowSize(window, &width, &height);
 	    glViewport(0, 0, width, height);
@@ -151,7 +155,7 @@ int main(int argc, char **argv) {
 	    ImGui_ImplSDL2_NewFrame(window);
 	    ImGui::NewFrame();
         ImGui::SetNextWindowSize(
-            ImVec2(static_cast<float>(width), static_cast<float>(height)),
+            ImVec2(float(width), float(height)),
             ImGuiCond_Always
             );
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always, ImVec2(0,0));
@@ -172,11 +176,8 @@ int main(int argc, char **argv) {
 		    outReport[2] = 0x04 | 0x08;
 			outReport[3] = 0x40;
 		    }
-			if(!bt){
-			int res = hid_write(handle,outReport,65);
-	    	if(res < 0)
-	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
-	    	}
+			if(!bt)
+			hid_write(handle,outReport,65);
 			else{
 
 				unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
@@ -186,9 +187,7 @@ int main(int argc, char **argv) {
                 outReport[75] = (uint8_t)(crc >> 8);
                 outReport[76] = (uint8_t)(crc >> 16);
                 outReport[77] = (uint8_t)(crc >> 24);
-				int res = hid_write(handle,outReport, 78);
-		    	if(res < 0)
-		    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+				hid_write(handle,outReport, 78);
 
 			}
 			left_cur = 0;
@@ -247,11 +246,8 @@ int main(int argc, char **argv) {
 	    			    outReport[2] = 0x04 | 0x08;
 	    				outReport[3] = 0x40;
 	    			    }
-	    	if(!bt){
-	    	int res = hid_write(handle,outReport,65);
-	    	if(res < 0)
-	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
-	    	}
+	    	if(!bt)
+	    	hid_write(handle,outReport,65);
 	    	else{
 	    		unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
 	    						crc = ~crc32_le(crc, outReport, 74);
@@ -260,9 +256,7 @@ int main(int argc, char **argv) {
                 outReport[75] = (uint8_t)(crc >> 8);
                 outReport[76] = (uint8_t)(crc >> 16);
                 outReport[77] = (uint8_t)(crc >> 24);
-	    	int res = hid_write(handle, outReport,78);
-	    	if(res < 0)
-	    		fprintf(stderr, "Error: %ls\n", hid_error(handle));
+                hid_write(handle, outReport,78);
 	    	}
 	    }
 
