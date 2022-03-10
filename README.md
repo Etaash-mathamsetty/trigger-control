@@ -1,4 +1,6 @@
 # trigger control  
+![image](https://user-images.githubusercontent.com/45927311/157581763-3e169f96-7434-417c-9eb9-c23c7f4fb235.png)   
+
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux using a gui  
 ~~currently only works through usb though the controller is detected through bluetooth~~  
 
