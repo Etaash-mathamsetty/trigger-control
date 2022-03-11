@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 	    }
 
 	    ImGui::Text("Right Trigger:");
-	    ImGui::ListBox("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
+	    ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 	    outReport[11 + bt] = get_mode(right_cur);
 	    int arr[7] = {0};
 	    for(int i = 0; i < 6; i++){
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
 	    }
 	    outReport[20 + bt] = arr[6];
 	    ImGui::Text("Left Trigger:");
-	    ImGui::ListBox("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
+	    ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
 	    outReport[22 + bt] = get_mode(left_cur);
 	    int arr2[7] = {0};
 	    for(int i = 0; i < 6; i++){
