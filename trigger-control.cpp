@@ -60,6 +60,8 @@ int main(int argc, char **argv) {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", 0, 0, 640, 480, WindowFlags);
+	SDL_SetWindowMinimumSize(window, 300, 250);
+	int height = 480, width = 640;
 	assert(window);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
@@ -79,6 +81,7 @@ int main(int argc, char **argv) {
 	       // setup platform/renderer bindings
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
+	    SDL_GL_SetSwapInterval(1);
 	struct hid_device_info *devs, *cur_dev;
 		devs = hid_enumerate(0x0,0x0);
 		cur_dev = devs;
@@ -138,7 +141,11 @@ int main(int argc, char **argv) {
 		        {
 		    	   running = false;
 		        }
+		    	if(event.window.event == SDL_WINDOWEVENT_RESIZED){
+		    		SDL_GetWindowSize(window, &width, &height);
+		    	}
 		    }
+
 		const wchar_t* error = hid_error(handle);
 		if(wcscmp(error, L"Success") != 0){
 			char* arr = (char*)alloca(wcslen(error));
@@ -146,8 +153,7 @@ int main(int argc, char **argv) {
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR",arr,window);
 			exit(EXIT_FAILURE);
 		}
-		int height, width;
-		SDL_GetWindowSize(window, &width, &height);
+
 	    glViewport(0, 0, width, height);
 	    glClearColor(0.f, 0.f, 0.f, 0.f);
 	    glClear(GL_COLOR_BUFFER_BIT);
@@ -180,7 +186,7 @@ int main(int argc, char **argv) {
 			hid_write(handle,outReport,65);
 			else{
 
-				unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
+				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
 				crc = ~crc32_le(crc, outReport, 74);
 				printf("crc: %u\n", crc);
                 outReport[74] = (uint8_t)crc;
@@ -222,7 +228,7 @@ int main(int argc, char **argv) {
 	    	 arr2[i] = outReport[i + 23 + bt];
 	    }
 	    arr2[6] = outReport[31 + bt];
-	    ImGui::SliderInt("Left Start Resistance", (int*)&arr2[0], 0, 255, "%d", 0);
+	    ImGui::SliderInt("Left Start Resistance", (int*)&arr2[0], 0, 255, "%d",0);
 	    ImGui::SliderInt("Left Effect Force", (int*)&arr2[1], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Left Range Force", (int*)&arr2[2], 0, 255, "%d", 0);
 	    ImGui::SliderInt("Left Near Release Strength", (int*)&arr2[3], 0, 255, "%d", 0);
@@ -249,7 +255,7 @@ int main(int argc, char **argv) {
 	    	if(!bt)
 	    	hid_write(handle,outReport,65);
 	    	else{
-	    		unsigned int crc = crc32_le(0xFFFFFFFF, &seed, 1);
+	    		unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
 	    						crc = ~crc32_le(crc, outReport, 74);
 	    						printf("crc: %u\n", crc);
                 outReport[74] = (uint8_t)crc;
