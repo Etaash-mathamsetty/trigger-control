@@ -1,7 +1,7 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 OBJS = trigger-control.o imgui.o imgui_impl_opengl3.o imgui_impl_sdl.o imgui_demo.o imgui_draw.o imgui_tables.o imgui_widgets.o
-LIBRARIES = -lusb1.0 -lSDL2 -lhidapi-hidraw -lGL -lGLEW -I/usr/include/SDL2
+LIBRARIES = -lusb-1.0 -lSDL2 -lhidapi-hidraw -lGL -lGLEW -I/usr/include/SDL2
 
 ifeq ($(BUILD_MODE),debug)
 	CFLAGS += -g
