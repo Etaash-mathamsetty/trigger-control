@@ -7,14 +7,13 @@ a quick and dirty project that allows you to control the adaptive triggers of th
 now works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)
 
 libraries:  
-libusb  
 libSDL2  
 libhidapi  
 libgl  
 glew  
 
 installing them on arch linux:  
-`sudo pacman -S sdl2 libusb hidapi glew libgl base-devel`  
+`sudo pacman -S sdl2 hidapi glew libgl base-devel`  
 
 **How to compile**  
 
