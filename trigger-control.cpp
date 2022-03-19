@@ -10,7 +10,10 @@
 #include "imgui_impl_opengl3.h"
 #include "icon.h"
 #include "crc32.h"
+#include <glib-2.0/glib.h>
 #include <iostream>
+#include <SDL2/SDL_mixer.h>
+
 
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
@@ -26,7 +29,10 @@ enum dualsense_modes{
 };
 
 void error_sound(){
-	std::cout << '\a' << std::flush;
+		const gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
+		const gchar* path = g_build_filename(name, "bell-terminal.ogg", NULL);
+		Mix_Chunk* sound = Mix_LoadWAV((const char*)path);
+		Mix_PlayChannel(-1, sound,0);
 }
 
 int get_mode(int index){
@@ -57,7 +63,7 @@ int get_mode(int index){
 
 int main(int argc, char **argv) {
 	hid_init();
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", 0, 0, 640, 480, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 300, 250);
@@ -68,9 +74,12 @@ int main(int argc, char **argv) {
 	SDL_Surface* surface;
 	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );
 	SDL_SetWindowIcon(window, surface);
-
-	  // ...and the surface containing the icon pixel data is no longer required.
 	  SDL_FreeSurface(surface);
+	 if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 )  < 0){
+		 //error_sound(); lmao cannot play the sound without mixer
+		 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not initialize sdl_mixer",window);
+		 exit(EXIT_FAILURE);
+	 }
 	glewExperimental=true;
 	glewInit();
 	IMGUI_CHECKVERSION();
@@ -87,6 +96,7 @@ int main(int argc, char **argv) {
 		cur_dev = devs;
 		bool bt = false;
 		char* path = NULL;
+		//here for potential future multi-controller support
 		while (cur_dev) {
 			if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
 				path = (char*)calloc(strlen(cur_dev->path), sizeof(char));
@@ -143,18 +153,19 @@ int main(int argc, char **argv) {
 		        }
 		    	if(event.window.event == SDL_WINDOWEVENT_RESIZED){
 		    		SDL_GetWindowSize(window, &width, &height);
+		    	    glViewport(0, 0, width, height);
 		    	}
 		    }
 
 		const wchar_t* error = hid_error(handle);
 		if(wcscmp(error, L"Success") != 0){
+			error_sound();
 			char* arr = (char*)alloca(wcslen(error));
 			sprintf(arr, "%ls", error);
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR",arr,window);
 			exit(EXIT_FAILURE);
 		}
 
-	    glViewport(0, 0, width, height);
 	    glClearColor(0.f, 0.f, 0.f, 0.f);
 	    glClear(GL_COLOR_BUFFER_BIT);
 	    ImGui_ImplOpenGL3_NewFrame();
