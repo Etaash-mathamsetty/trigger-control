@@ -29,8 +29,8 @@ enum dualsense_modes{
 };
 
 void error_sound(){
-		const gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
-		const gchar* path = g_build_filename(name, "bell-terminal.ogg", NULL);
+		g_autofree gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
+		g_autofree gchar* path = g_build_filename(name, "bell-terminal.ogg", NULL);
 		Mix_Chunk* sound = Mix_LoadWAV((const char*)path);
 		Mix_PlayChannel(-1, sound,0);
 }
