@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 	   		    outReport[2] = 0x04 | 0x08;
 	   			outReport[3] = 0x40;
 	   		    }
-		const char* states[9] = {"Off","Rigid","Pulse","RigidA","RigidB (retracts)","RigidAB","PulseA","PulseB (retracts)","PulseAB"};
+		const char* states[9] = {"Off","Rigid","Pulse","RigidA","RigidB","RigidAB","PulseA","PulseB","PulseAB"};
 		int left_cur = 0;
 		int right_cur = 0;
 	while(running){
