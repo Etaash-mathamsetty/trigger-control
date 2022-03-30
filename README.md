@@ -33,9 +33,9 @@ chmod +x compile.sh
 sudo cp trigger-control /usr/bin
 ```
 
-**update**
+**update**  
+enter the directory in which you cloned this repo  
 ```
-cd trigger-control
 git pull
 ./compile.sh
 sudo cp trigger-control /usr/bin
