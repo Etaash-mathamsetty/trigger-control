@@ -193,6 +193,8 @@ int main(int argc, char **argv) {
 		    outReport[2] = 0x04 | 0x08;
 			outReport[3] = 0x40;
 		    }
+		    outReport[11 + bt] = dualsense_modes::Rigid_B;
+		    outReport[20 + bt] = dualsense_modes::Rigid_B;
 			if(!bt)
 			hid_write(handle,outReport,65);
 			else{
