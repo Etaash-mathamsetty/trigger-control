@@ -294,6 +294,13 @@ int main(int argc, char **argv) {
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
+	
+	Mix_CloseAudio();
+	Mix_Quit();
+	hid_close(handle);
+	hid_exit();
+	delete outReport;
+	SDL_Quit();
 	//program termination should free memory I forgot to free :D
 	return 0;
 }
