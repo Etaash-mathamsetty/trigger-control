@@ -23,7 +23,7 @@ glib2
 **run**   
 `./trigger-control`  
 
-**install**
+**install**  
 install dependencies first
 ```
 git clone https://github.com/Etaash-mathamsetty/trigger-control.git
