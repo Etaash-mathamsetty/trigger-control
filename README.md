@@ -23,4 +23,22 @@ glib2
 **run**   
 `./trigger-control`  
 
+**install**
+install dependencies first
+```
+git clone https://github.com/Etaash-mathamsetty/trigger-control.git
+cd trigger-control
+chmod +x compile.sh
+./compile.sh
+sudo cp trigger-control /usr/bin
+```
+
+**update**
+```
+cd trigger-control
+git pull
+./compile.sh
+sudo cp trigger-control /usr/bin
+```
+
 based on https://github.com/flok/pydualsense  
