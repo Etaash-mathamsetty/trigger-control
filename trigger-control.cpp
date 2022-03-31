@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 	    ImGui::Text("Right Trigger:");
 	    ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 	    uint8_t min  = 0;
-	    uint8_t max = 255;
+	    uint8_t max = UINT8_MAX;
 	    outReport[11 + bt] = get_mode(right_cur);
 	    ImGui::SliderScalar("Right Start Resistance", ImGuiDataType_U8, &outReport[12+ bt] ,&min, &max, "%d",0);
 	    ImGui::SliderScalar("Right Effect Force", ImGuiDataType_U8,&outReport[13+ bt] , &min, &max, "%d", 0);
