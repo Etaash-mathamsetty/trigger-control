@@ -353,6 +353,18 @@ int main(int argc, char **argv) {
 				load_preset(outReport, bt, options[preset_index]);
 				right_cur = get_index(outReport[11 + bt]);
 				left_cur = get_index(outReport[22+ bt]);
+				if(!bt)
+				hid_write(handle,outReport,65);
+				else{
+				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
+				crc = ~crc32_le(crc, outReport, 74);
+				printf("crc: %u\n", crc);
+                outReport[74] = (uint8_t)crc;
+                outReport[75] = (uint8_t)(crc >> 8);
+                outReport[76] = (uint8_t)(crc >> 16);
+                outReport[77] = (uint8_t)(crc >> 24);
+				hid_write(handle,outReport, 78);
+			}
 				load_preset_open = false;
 			}
 
