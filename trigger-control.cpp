@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 			outReport[3] = 0x40;
 		    }
 		    outReport[11 + bt] = (uint8_t)dualsense_modes::Rigid_B;
-		    outReport[20 + bt] = (uint8_t)dualsense_modes::Rigid_B;
+		    outReport[22 + bt] = (uint8_t)dualsense_modes::Rigid_B;
 			if(!bt)
 			hid_write(handle,outReport,65);
 			else{
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 			right_cur = 0;
 			printf("reset!\n");
 		    outReport[11 + bt] = (uint8_t)0;
-		    outReport[20 + bt] = (uint8_t)0;
+		    outReport[22 + bt] = (uint8_t)0;
 	    }
 
 	    ImGui::Text("Right Trigger:");
