@@ -13,7 +13,14 @@
 #include <glib-2.0/glib.h>
 #include <iostream>
 #include <SDL2/SDL_mixer.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <vector>
 
+const char* VERSION = "Version 1.3 alpha";
+char* CONFIG_PATH = new char[100];
 
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
@@ -27,6 +34,52 @@ enum dualsense_modes{
     Pulse_B = 0x2 | 0x04,
     Pulse_AB = 0x2 | 0x20 | 0x04,
 };
+
+void load_preset(uint8_t* outReport,  bool bt, const char* name){
+	struct stat info;
+	int res = stat(CONFIG_PATH, &info);
+	if(info.st_mode & S_IFDIR){
+	}
+	else{
+		mkdir(CONFIG_PATH, 0777);
+	}
+	std::string path = std::string(CONFIG_PATH);
+	path += std::string(name); //remember that \0 and then "txt", yeah... this fixes that problem
+	path += ".txt";
+	//std::cout << path << std::endl;
+	FILE* f = fopen(path.c_str(), "rb");
+	if(f){
+		fread(outReport + 11 + bt, sizeof(*outReport), 30 -10, f);
+		fclose(f);
+	}
+	//printf("stub!\n");
+}
+
+void save_preset(const uint8_t* outReport, bool bt, const char* name){
+	struct stat info;
+	int res = stat(CONFIG_PATH, &info);
+	if(info.st_mode & S_IFDIR){
+	}
+	else{
+		mkdir(CONFIG_PATH, 0777);
+	}
+	//printf("stub!\n");
+	std::string path = std::string(CONFIG_PATH) + name + ".txt";
+	//open(path.c_str(), O_RDWR | O_CREAT, 0777);
+	FILE* f = fopen(path.c_str(), "wb");
+	if(!f)
+		return;
+	fseek(f, 0, SEEK_SET);
+	fwrite(outReport + 11 + bt, sizeof(*outReport), 30 -10, f);
+	fclose(f);
+}	
+
+void CenteredText(const char* text)
+{
+	ImVec2 size = ImGui::GetWindowSize();
+	ImGui::SetCursorPosX((size.x - ImGui::CalcTextSize(text).x) / 2);
+	ImGui::Text(text);
+}
 
 void error_sound(){
 		g_autofree gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
@@ -61,13 +114,42 @@ int get_mode(int index){
 	return 0;
 }
 
+int get_index(int mode){
+	switch(mode){
+	case dualsense_modes::Off:
+		return 0;
+	case dualsense_modes::Rigid:
+		return 1;
+	case dualsense_modes::Pulse:
+		return 2;
+	case dualsense_modes::Rigid_A:
+		return 3;
+	case dualsense_modes::Rigid_B:
+		return 4;
+	case dualsense_modes::Rigid_AB:
+		return 5;
+	case dualsense_modes::Pulse_A:
+		return 6;
+	case dualsense_modes::Pulse_B:
+		return 7;
+	case dualsense_modes::Pulse_AB:
+		return 8;
+	default:
+		break;
+	}
+	return 0;
+}
+
 int main(int argc, char **argv) {
+	memset(CONFIG_PATH, 0, 100);
+	strcpy(CONFIG_PATH, getenv("HOME"));
+	strcat(CONFIG_PATH, "/.config/trigger-control/");
 	hid_init();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-	SDL_Window *window = SDL_CreateWindow("Trigger Controls", 0, 0, 640, 480, WindowFlags);
+	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 300, 250);
-	int height = 480, width = 640;
+	int height = 520, width = 640;
 	assert(window);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
@@ -82,11 +164,19 @@ int main(int argc, char **argv) {
 	 }
 	glewExperimental=true;
 	glewInit();
+	bool popup_open = false;
+	bool save_preset_open = false;
+	bool load_preset_open = false;
+			char name[100];	
+			//name.reserve(100);
 	IMGUI_CHECKVERSION();
 	    ImGui::CreateContext();
 	    ImGuiIO& io = ImGui::GetIO(); (void)io;
 	    ImGui::StyleColorsDark();
-
+		ImGui::GetStyle().WindowRounding = 5.0f;
+		ImGui::GetStyle().PopupRounding = 5.0f;
+		ImGui::GetStyle().FrameRounding = 5.0f;
+		ImGui::GetStyle().GrabRounding = 5.0f;
 	       // setup platform/renderer bindings
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
@@ -96,6 +186,7 @@ int main(int argc, char **argv) {
 		cur_dev = devs;
 		bool bt = false;
 		char* path = NULL;
+		int preset_index = 0;
 		//here for potential future multi-controller support
 		while (cur_dev) {
 			if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
@@ -171,15 +262,121 @@ int main(int argc, char **argv) {
 	    ImGui_ImplOpenGL3_NewFrame();
 	    ImGui_ImplSDL2_NewFrame(window);
 	    ImGui::NewFrame();
-        ImGui::SetNextWindowSize(
+		    ImGui::SetNextWindowSize(
             ImVec2(float(width), float(height)),
             ImGuiCond_Always
-            );
+            );	
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always, ImVec2(0,0));
-	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
+		//ImGui::ShowDemoWindow();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,0.0f);
+	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
+		ImGui::PopStyleVar();
+	    if(ImGui::Checkbox("Using Bluetooth?",&bt)){
+			if(bt){
+				memmove(&outReport[12], &outReport[11] , 30 -10);
+			}
+			else{
+				memmove(&outReport[11], &outReport[12] , 30 -10);
+			}
+		}
+		if(ImGui::BeginMenuBar()){
+		if(ImGui::BeginMenu("File")){
+			if(ImGui::MenuItem("About")){
+					popup_open = true;
+			}
+			if(ImGui::MenuItem("Load Preset")){
+					load_preset_open = true;
+					memset(name, 0, sizeof(name));
+					//name.clear();
+			}
+			if(ImGui::MenuItem("Save Preset")){
+					save_preset_open = true;
+					memset(name, 0, sizeof(name));
+					//name.clear();
+			}
+			if(ImGui::MenuItem("Exit")){
+				running = false;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+		}
+		if(popup_open)
+		{
+			//ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing);
+			ImGui::OpenPopup("About");
+		}
+		if(load_preset_open ){
+			ImGui::OpenPopup("Load Preset");
+		}
+		if(save_preset_open){
+			ImGui::OpenPopup("Save Preset");
+		}
 
-	    ImGui::Checkbox("Using Bluetooth?",&bt);
+		if(ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+					//printf("about2!\n");
+				ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+				_pos.x -= ImGui::GetWindowWidth()/2;
+				_pos.y -= ImGui::GetWindowHeight()/2;
+				ImGui::SetWindowPos(_pos);
+				CenteredText("Trigger Control");
+				CenteredText(VERSION);
+				ImGui::Separator();
+				ImGui::Text("Made with FOSS, Powered by SDL2");
+				ImGui::EndPopup();
+		}
+		if(ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth()/2;
+			_pos.y -= ImGui::GetWindowHeight()/2;
+			ImGui::SetWindowPos(_pos);
+			std::vector<const char*> options;
+			DIR *d;
+  			struct dirent *dir;
+  			d = opendir(CONFIG_PATH);
+  			if (d) {
+    			while ((dir = readdir(d)) != NULL) {
+      				//printf("%s\n", dir->d_name);
+					char* ptr = strrchr(dir->d_name, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(dir->d_name);
+						//*ptr = temp;
+					}
+    			}
+    		closedir(d);
+ 			 }
+			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
+			if(ImGui::Button("Load")){
+				load_preset(outReport, bt, options[preset_index]);
+				right_cur = get_index(outReport[11 + bt]);
+				left_cur = get_index(outReport[22+ bt]);
+				load_preset_open = false;
+			}
 
+			ImGui::EndPopup();
+		}
+		if(ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth()/2;
+			_pos.y -= ImGui::GetWindowHeight()/2;
+			ImGui::SetWindowPos(_pos);
+			
+			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue)){
+				save_preset(outReport, bt, name);
+				save_preset_open = false;
+			}
+
+			if(ImGui::Button("Save")){
+				save_preset(outReport, bt, name);
+				save_preset_open = false;
+			}
+
+			ImGui::EndPopup();
+		}
 	    if(ImGui::Button("Reset")){
 		    memset(outReport, 0, 78);
 		    if(!bt){
