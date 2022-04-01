@@ -1,5 +1,5 @@
 # trigger control  
-![image](https://user-images.githubusercontent.com/45927311/160961411-c67efe0d-5b98-480b-9e73-5a525192e641.png)
+![image](https://user-images.githubusercontent.com/45927311/161355061-a773a3e1-c9b3-483b-ab5a-9eef4026885d.png)
 
 
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux using a gui  
