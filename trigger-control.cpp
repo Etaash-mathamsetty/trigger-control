@@ -167,6 +167,7 @@ int main(int argc, char **argv) {
 	bool popup_open = false;
 	bool save_preset_open = false;
 	bool load_preset_open = false;
+	bool delete_preset_open = false;
 			char name[100];	
 			//name.reserve(100);
 	IMGUI_CHECKVERSION();
@@ -294,6 +295,11 @@ int main(int argc, char **argv) {
 					memset(name, 0, sizeof(name));
 					//name.clear();
 			}
+			if(ImGui::MenuItem("Delete Preset")){
+					delete_preset_open = true;
+					memset(name, 0, sizeof(name));
+					//name.clear();
+			}
 			if(ImGui::MenuItem("Exit")){
 				running = false;
 			}
@@ -311,6 +317,9 @@ int main(int argc, char **argv) {
 		}
 		if(save_preset_open){
 			ImGui::OpenPopup("Save Preset");
+		}
+		if(delete_preset_open){
+			ImGui::OpenPopup("Delete Preset");
 		}
 
 		if(ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
@@ -387,6 +396,36 @@ int main(int argc, char **argv) {
 				save_preset_open = false;
 			}
 
+			ImGui::EndPopup();
+		}
+		if(ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth()/2;
+			_pos.y -= ImGui::GetWindowHeight()/2;
+			ImGui::SetWindowPos(_pos);
+			std::vector<const char*> options;
+			DIR *d;
+  			struct dirent *dir;
+  			d = opendir(CONFIG_PATH);
+  			if (d) {
+    			while ((dir = readdir(d)) != NULL) {
+      				//printf("%s\n", dir->d_name);
+					char* ptr = strrchr(dir->d_name, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(dir->d_name);
+						//*ptr = temp;
+					}
+    			}
+    		closedir(d);
+ 			 }
+			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
+			if(ImGui::Button("Delete!")){
+				remove((std::string(CONFIG_PATH)+std::string(options[preset_index])+".txt").c_str());
+				delete_preset_open = false;
+			}
 			ImGui::EndPopup();
 		}
 	    if(ImGui::Button("Reset")){
@@ -494,6 +533,7 @@ int main(int argc, char **argv) {
 	hid_exit();
 	delete outReport;
 	SDL_Quit();
+	remove("imgui.ini");
 	//program termination should free memory I forgot to free :D
 	return 0;
 }
