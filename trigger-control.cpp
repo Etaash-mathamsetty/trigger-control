@@ -18,8 +18,9 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <vector>
+#include <algorithm>
 
-const char* VERSION = "Version 1.3 alpha";
+const char* VERSION = "Version 1.3 beta";
 char* CONFIG_PATH = new char[100];
 
 const uint8_t seed = 0xA2;
@@ -168,6 +169,7 @@ int main(int argc, char **argv) {
 	bool save_preset_open = false;
 	bool load_preset_open = false;
 	bool delete_preset_open = false;
+	bool preset_exists = false;
 			char name[100];	
 			//name.reserve(100);
 	IMGUI_CHECKVERSION();
@@ -379,6 +381,33 @@ int main(int argc, char **argv) {
 
 			ImGui::EndPopup();
 		}
+
+		if(preset_exists){
+			ImGui::OpenPopup("Preset Exists");
+		}
+
+		if(ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(300,180),ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth()/2;
+			_pos.y -= ImGui::GetWindowHeight()/2;
+			ImGui::SetWindowPos(_pos);
+			ImGui::Text("This Preset already exists! Are You Sure You Want To Overwrite It?");
+			if(ImGui::Button("Yes")){
+				save_preset(outReport, bt, name);
+				save_preset_open = false;
+				ImGui::CloseCurrentPopup();
+				preset_exists = false;
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("No")){
+				ImGui::CloseCurrentPopup();
+				preset_exists = false;
+				save_preset_open = true;
+			}
+			ImGui::EndPopup();
+		}
+
 		if(ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
 			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
@@ -386,18 +415,62 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			
-			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue)){
-				save_preset(outReport, bt, name);
-				save_preset_open = false;
+			std::vector<const char*> options;
+			DIR *d;
+  			struct dirent *dir;
+  			d = opendir(CONFIG_PATH);
+  			if (d) {
+    			while ((dir = readdir(d)) != NULL) {
+      				//printf("%s\n", dir->d_name);
+					char* ptr = strrchr(dir->d_name, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(dir->d_name);
+						//*ptr = temp;
+					}
+    			}
+    		closedir(d);
+ 			 }
+
+			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0'){
+				auto is_name = [name](const char* a){
+					return strcmp(a, std::string(name).c_str()) == 0; //remove trailing characters we left behind lol
+				};
+				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
+					printf("Preset already exists!\n");
+					//ImGui::CloseCurrentPopup();
+					save_preset_open = false;
+					//ImGui::OpenPopup("Preset Exists!");
+					preset_exists = true;
+				}
+				else{
+					save_preset(outReport, bt, name);
+					save_preset_open = false;
+				}
 			}
 
 			if(ImGui::Button("Save") && name[0] != '\0'){
-				save_preset(outReport, bt, name);
-				save_preset_open = false;
+				auto is_name = [name](const char* a){
+					return strcmp(a, std::string(name).c_str()) == 0; //remove trailing characters that we left behind lol
+				};
+				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
+					printf("Preset already exists!\n");
+					//preset_exists = true;
+					//ImGui::CloseCurrentPopup();
+					save_preset_open = false;
+					//ImGui::OpenPopup("Preset Exists!");
+					preset_exists = true;
+				}
+				else{
+					save_preset(outReport, bt, name);
+					save_preset_open = false;
+				}
 			}
 
 			ImGui::EndPopup();
 		}
+
 		if(ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
 			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
