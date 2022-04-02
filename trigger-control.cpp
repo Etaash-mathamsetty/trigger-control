@@ -284,9 +284,6 @@ int main(int argc, char **argv) {
 		}
 		if(ImGui::BeginMenuBar()){
 		if(ImGui::BeginMenu("File")){
-			if(ImGui::MenuItem("About")){
-					popup_open = true;
-			}
 			if(ImGui::MenuItem("Load Preset")){
 					load_preset_open = true;
 					memset(name, 0, sizeof(name));
@@ -302,8 +299,17 @@ int main(int argc, char **argv) {
 					memset(name, 0, sizeof(name));
 					//name.clear();
 			}
-			if(ImGui::MenuItem("Exit")){
-				running = false;
+			ImGui::EndMenu();
+		}
+		if(ImGui::BeginMenu("Tools")){
+			if(ImGui::MenuItem("Options")){
+
+			}
+			ImGui::EndMenu();
+		}
+		if(ImGui::BeginMenu("Help")){
+			if(ImGui::MenuItem("About")){
+					popup_open = true;
 			}
 			ImGui::EndMenu();
 		}
