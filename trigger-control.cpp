@@ -89,6 +89,37 @@ void error_sound(){
 		Mix_PlayChannel(-1, sound,0);
 }
 
+//I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
+int find_dev(hid_device** handle, bool* bt){
+	struct hid_device_info* dev, *cur_dev; 
+	dev = hid_enumerate(0x0, 0x0);
+	cur_dev = dev;
+	while (cur_dev) {
+		if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
+			break;
+		}
+		cur_dev = cur_dev->next;
+	}
+	if(cur_dev && cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
+		*handle = hid_open_path(cur_dev->path);
+	else{
+		return -1;
+	}
+	hid_free_enumeration(dev);
+	uint8_t buf[20] = {0};
+	buf[0] = 0x09;
+	int _res = hid_get_feature_report(*handle, buf, 20);
+	if (_res != sizeof(buf)) {
+	      fprintf(stderr, "Invalid feature report\n");
+	      //return false;
+		  return -1;
+		  //happens when bluetooth is acting sus
+	}
+	*bt = *(uint32_t*)&buf[16] != 0;
+	//printf("%ls\n", hid_error(*handle));
+	return 0;
+}
+
 int get_mode(int index){
 	switch(index){
 	case 0:
@@ -184,39 +215,44 @@ int main(int argc, char **argv) {
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
 	    SDL_GL_SetSwapInterval(1);
-	struct hid_device_info *devs, *cur_dev;
-		devs = hid_enumerate(0x0,0x0);
-		cur_dev = devs;
+		//struct hid_device_info *devs, *cur_dev;
+		//devs = hid_enumerate(0x0,0x0);
+		//cur_dev = devs;
 		bool bt = false;
-		char* path = NULL;
+		//char* path = NULL;
 		int preset_index = 0;
-		//here for potential future multi-controller support
-		while (cur_dev) {
-			if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
-				path = (char*)calloc(strlen(cur_dev->path), sizeof(char));
-				memcpy(path, cur_dev->path, strlen(cur_dev->path) * sizeof(char));
-				break;
-			}
-				cur_dev = cur_dev->next;
-			}
-			hid_free_enumeration(devs);
-		hid_device *handle = hid_open_path(path);
-		//hid_get_feature_report(handle, data, length)
-		if(handle == NULL){
+		//here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
+		// while (cur_dev) {
+		// 	if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
+		// 		break;
+		// 	}
+		// 		cur_dev = cur_dev->next;
+		// }
+		// hid_device *handle = hid_open_path(cur_dev->path);
+		// hid_free_enumeration(devs);
+		// //hid_get_feature_report(handle, data, length)
+		// if(handle == NULL){
+		// 	error_sound();
+		// 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
+		// 	exit(EXIT_FAILURE);
+		// }
+		// uint8_t buf[20] = {0};
+		// buf[0] = 0x09;
+		// int _res = hid_get_feature_report(handle, buf, 20);
+	    // if (_res != sizeof(buf)) {
+	    //     fprintf(stderr, "Invalid feature report\n");
+	    //     //return false;
+	    // }
+		// bt = *(uint32_t*)&buf[16] != 0;
+		hid_device* handle;
+		int res = find_dev(&handle, &bt);
+		if(res == -1){
 			error_sound();
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
 			exit(EXIT_FAILURE);
 		}
-		uint8_t buf[20] = {0};
-		buf[0] = 0x09;
-		int _res = hid_get_feature_report(handle, buf, 20);
-	    if (_res != sizeof(buf)) {
-	        fprintf(stderr, "Invalid feature report\n");
-	        //return false;
-	    }
-		bt = *(uint32_t*)&buf[16] != 0;
-		printf("%d\n",bt);
-		free(path);
+		//printf("%d\n",bt);
+		//free(path);
 		bool running = true;
 		//SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
 		uint8_t* outReport = new uint8_t[78];
@@ -250,14 +286,22 @@ int main(int argc, char **argv) {
 		    	    glViewport(0, 0, width, height);
 		    	}
 		    }
-
+		{
+		//printf("before seg\n");
+		uint8_t serial;
+		hid_read(handle, &serial, 1); //check if device is still here
+		}
+		//printf("before segfault???\n");
 		const wchar_t* error = hid_error(handle);
 		if(wcscmp(error, L"Success") != 0){
+			//printf("here!\n");
+			hid_close(handle);
+			int res = find_dev(&handle, &bt);
+			if(res == -1){
 			error_sound();
-			char* arr = (char*)alloca(wcslen(error));
-			sprintf(arr, "%ls", error);
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR",arr,window);
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","Controller Disconnected! (or something else happened)",window);
 			exit(EXIT_FAILURE);
+			}
 		}
 
 	    glClearColor(0.f, 0.f, 0.f, 0.f);
