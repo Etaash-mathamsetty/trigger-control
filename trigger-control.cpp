@@ -358,7 +358,7 @@ int main(int argc, char **argv) {
     		closedir(d);
  			 }
 			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
-			if(ImGui::Button("Load")){
+			if(ImGui::Button("Load") && options.size() > 0){
 				load_preset(outReport, bt, options[preset_index]);
 				right_cur = get_index(outReport[11 + bt]);
 				left_cur = get_index(outReport[22+ bt]);
@@ -391,7 +391,7 @@ int main(int argc, char **argv) {
 				save_preset_open = false;
 			}
 
-			if(ImGui::Button("Save")){
+			if(ImGui::Button("Save") && name[0] != '\0'){
 				save_preset(outReport, bt, name);
 				save_preset_open = false;
 			}
@@ -422,7 +422,7 @@ int main(int argc, char **argv) {
     		closedir(d);
  			 }
 			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
-			if(ImGui::Button("Delete!")){
+			if(ImGui::Button("Delete!") && options.size() > 0){
 				remove((std::string(CONFIG_PATH)+std::string(options[preset_index])+".txt").c_str());
 				delete_preset_open = false;
 			}
