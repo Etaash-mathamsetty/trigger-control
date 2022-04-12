@@ -19,7 +19,7 @@ glib2
 
 **How to compile**  
 
-`chmod +x compile.sh && ./compile.sh`  
+`make`  
 
 **run**   
 `./trigger-control`  
@@ -30,7 +30,7 @@ install dependencies first
 git clone https://github.com/Etaash-mathamsetty/trigger-control.git
 cd trigger-control
 chmod +x compile.sh
-./compile.sh
+make
 sudo cp trigger-control /usr/bin
 ```
 
@@ -38,7 +38,7 @@ sudo cp trigger-control /usr/bin
 enter the directory in which you cloned this repo  
 ```
 git pull
-./compile.sh
+make
 sudo cp trigger-control /usr/bin
 ```
 
