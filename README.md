@@ -14,7 +14,7 @@ libgl
 glew  
 glib2  
 
-**installing them on arch linux:**  
+**installing them on arch linux (or manjaro):**  
 `sudo pacman -S sdl2 hidapi glew libgl base-devel glib2`  
 
 **How to compile**  
