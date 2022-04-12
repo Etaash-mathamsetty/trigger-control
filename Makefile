@@ -1,7 +1,7 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 OBJS = trigger-control.o imgui.o imgui_impl_opengl3.o imgui_impl_sdl.o imgui_demo.o imgui_draw.o imgui_tables.o imgui_widgets.o
-LIBRARIES = -lusb -lSDL2 -lSDL2_mixer -lhidapi-hidraw -lGL -lGLEW -I/usr/include/SDL2 `pkg-config --libs glib-2.0` `pkg-config --cflags glib-2.0`
+LIBRARIES = -lusb -lSDL2 -lSDL2_mixer -lhidapi-hidraw -lGL -lGLEW -I/usr/include/SDL2 `pkg-config --libs glib-2.0` `pkg-config --cflags glib-2.0` -Wl,--no-as-needed -ldl
 
 ifeq ($(BUILD_MODE),debug)
 	CFLAGS += -g
