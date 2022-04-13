@@ -48,7 +48,7 @@ enum dualsense_modes{
 
 void load_preset(uint8_t* outReport,  bool bt, const char* name){
 	struct stat info;
-	int res = stat(CONFIG_PATH, &info);
+	stat(CONFIG_PATH, &info);
 	if(info.st_mode & S_IFDIR){
 	}
 	else{
@@ -73,7 +73,7 @@ void load_preset(uint8_t* outReport,  bool bt, const char* name){
 
 void save_preset(const uint8_t* outReport, bool bt, const char* name){
 	struct stat info;
-	int res = stat(CONFIG_PATH, &info);
+	stat(CONFIG_PATH, &info);
 	if(info.st_mode & S_IFDIR){
 	}
 	else{
@@ -218,19 +218,27 @@ int main(int argc, char **argv) {
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
 	#endif
 	#ifdef _WIN32
-	//strcpy(CONFIG_PATH, getenv("APPDATA"));
-	WCHAR* path = new WCHAR[PATH_MAX];
-	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
-	sprintf(CONFIG_PATH, "%ls\\trigger-control\\", path);
-	//strcat(CONFIG_PATH, "\\trigger-control\\");
+	//printf(getenv("APPDATA"));
+	//putchar('\n');
+	strcpy(CONFIG_PATH, getenv("APPDATA"));
+	//WCHAR* path = new WCHAR[PATH_MAX];
+	//SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
+	//MessageBeep(MB_ICONERROR);
+	//sprintf(CONFIG_PATH, "%ls\\trigger-control\\", path);
+	strcat(CONFIG_PATH, "\\trigger-control\\");
 	printf(CONFIG_PATH);
-	delete path;
+	//delete path;
 	#endif
 	hid_init();
 	#ifdef _WIN32
 	ImGui_ImplWin32_EnableDpiAwareness();
 	#endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
+	#ifdef _WIN32
+	freopen("CON", "w", stdout);
+	freopen("CON", "w", stderr);
+	freopen("CON","r",stdin);
+	#endif
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 300, 250);
@@ -270,6 +278,11 @@ int main(int argc, char **argv) {
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
 	    SDL_GL_SetSwapInterval(1);
+		float dpi_x, dpi_y, dpi_z;
+		SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
+		float dpi_scaling = dpi_x / 96.0f;
+		ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
+		//float dpi = ImGui::
 		//struct hid_device_info *devs, *cur_dev;
 		//devs = hid_enumerate(0x0,0x0);
 		//cur_dev = devs;
@@ -285,7 +298,7 @@ int main(int argc, char **argv) {
 		// }
 		// hid_device *handle = hid_open_path(cur_dev->path);
 		// hid_free_enumeration(devs);
-		// //hid_get_feature_report(handle, data, length)
+		// //hid_ge		io.DisplaySize = ImVec2(width/dpi, height/dpi);t_feature_report(handle, data, length)
 		// if(handle == NULL){
 		// 	error_sound();
 		// 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
@@ -338,7 +351,7 @@ int main(int argc, char **argv) {
 		        }
 		    	if(event.window.event == SDL_WINDOWEVENT_RESIZED){
 		    		SDL_GetWindowSize(window, &width, &height);
-		    	    glViewport(0, 0, width, height);
+					glViewport(0, 0, width, height);
 		    	}
 		    }
 		{
