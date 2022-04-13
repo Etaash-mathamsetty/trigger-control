@@ -482,12 +482,16 @@ int main(int argc, char **argv) {
 			#ifdef _WIN32
 			HANDLE hfind;
 			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			hfind = FindFirstFile(CONFIG_PATH, &fd);
 			if (hfind != INVALID_HANDLE_VALUE) {
 				do {
 					char* ptr = strrchr(fd.cFileName, '.');
-					*ptr = '\0';
-					options.push_back(fd.cFileName);
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(fd.cFileName);
+						//*ptr = temp;
+					}
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
@@ -570,15 +574,17 @@ int main(int argc, char **argv) {
 			#ifdef _WIN32
 			HANDLE hfind;
 			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			hfind = FindFirstFile(CONFIG_PATH, &fd);
 			if (hfind != INVALID_HANDLE_VALUE) {
 				do {
 					//printf("%s\n", fd.cFileName);
 					char* ptr = strrchr(fd.cFileName, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
 						//char temp = *ptr;
 						*ptr = '\0'; 
 						options.push_back(fd.cFileName);
 						//*ptr = temp;
+					}
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
@@ -649,16 +655,16 @@ int main(int argc, char **argv) {
 			#ifdef _WIN32
 			HANDLE hfind;
 			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			hfind = FindFirstFile(CONFIG_PATH, &fd);
 			if (hfind != INVALID_HANDLE_VALUE) {
 				do {
-					//printf("%s\n", fd.cFileName);
 					char* ptr = strrchr(fd.cFileName, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
 						//char temp = *ptr;
 						*ptr = '\0'; 
 						options.push_back(fd.cFileName);
 						//*ptr = temp;
-					
+					}
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
