@@ -17,6 +17,7 @@
 #include <windows.h>
 #include <winuser.h>
 #include <shlobj.h>
+#include "imgui_impl_win32.h"
 #endif
 #include <iostream>
 #ifdef __linux__
@@ -226,6 +227,7 @@ int main(int argc, char **argv) {
 	delete path;
 	#endif
 	hid_init();
+	ImGui_ImplWin32_EnableDpiAwareness();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
