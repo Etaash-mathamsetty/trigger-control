@@ -18,16 +18,18 @@
 #include <winuser.h>
 #endif
 #include <iostream>
+#ifdef __linux__
 #include <SDL2/SDL_mixer.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <pwd.h>
+//#include <pwd.h>
 #include <vector>
 #include <algorithm>
 
 const char* VERSION = "Version 1.3 beta";
-char* CONFIG_PATH = new char[100];
+char* CONFIG_PATH = new char[MAX_PATH];
 
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
@@ -48,7 +50,12 @@ void load_preset(uint8_t* outReport,  bool bt, const char* name){
 	if(info.st_mode & S_IFDIR){
 	}
 	else{
+		#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
+		#endif
+		#ifdef _WIN32
+		mkdir(CONFIG_PATH);
+		#endif
 	}
 	std::string path = std::string(CONFIG_PATH);
 	path += std::string(name); //remember that \0 and then "txt", yeah... this fixes that problem
@@ -68,7 +75,12 @@ void save_preset(const uint8_t* outReport, bool bt, const char* name){
 	if(info.st_mode & S_IFDIR){
 	}
 	else{
+		#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
+		#endif
+		#ifdef _WIN32
+		mkdir(CONFIG_PATH);
+		#endif
 	}
 	//printf("stub!\n");
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
@@ -185,8 +197,14 @@ int get_index(int mode){
 
 int main(int argc, char **argv) {
 	memset(CONFIG_PATH, 0, 100);
+	#ifdef __linux__
 	strcpy(CONFIG_PATH, getenv("HOME"));
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
+	#endif
+	#ifdef _WIN32
+	strcpy(CONFIG_PATH, getenv("APPDATA"));
+	strcat(CONFIG_PATH, "\\trigger-control\\");
+	#endif
 	hid_init();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
@@ -200,11 +218,13 @@ int main(int argc, char **argv) {
 	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );
 	SDL_SetWindowIcon(window, surface);
 	  SDL_FreeSurface(surface);
+	  #ifdef __linux__
 	 if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 )  < 0){
 		 //error_sound(); lmao cannot play the sound without mixer
 		 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not initialize sdl_mixer",window);
 		 exit(EXIT_FAILURE);
 	 }
+	 #endif
 	glewExperimental=true;
 	glewInit();
 	bool popup_open = false;
@@ -404,6 +424,7 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<const char*> options;
+			#ifdef __linux__
 			DIR *d;
   			struct dirent *dir;
   			d = opendir(CONFIG_PATH);
@@ -420,6 +441,25 @@ int main(int argc, char **argv) {
     			}
     		closedir(d);
  			 }
+			#endif
+			#ifdef _WIN32
+			HANDLE hfind;
+			WIN32_FIND_DATA fd;
+			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			if (hfind != INVALID_HANDLE_VALUE) {
+				do {
+					//printf("%s\n", fd.cFileName);
+					char* ptr = strrchr(fd.cFileName, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(fd.cFileName);
+						//*ptr = temp;
+					}
+				} while (FindNextFile(hfind, &fd));
+				FindClose(hfind);
+			}
+			#endif
 			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
 			if(ImGui::Button("Load") && options.size() > 0){
 				load_preset(outReport, bt, options[preset_index]);
@@ -477,6 +517,7 @@ int main(int argc, char **argv) {
 			ImGui::SetWindowPos(_pos);
 			
 			std::vector<const char*> options;
+			#ifdef __linux__
 			DIR *d;
   			struct dirent *dir;
   			d = opendir(CONFIG_PATH);
@@ -493,7 +534,25 @@ int main(int argc, char **argv) {
     			}
     		closedir(d);
  			 }
-
+			#endif
+			#ifdef _WIN32
+			HANDLE hfind;
+			WIN32_FIND_DATA fd;
+			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			if (hfind != INVALID_HANDLE_VALUE) {
+				do {
+					//printf("%s\n", fd.cFileName);
+					char* ptr = strrchr(fd.cFileName, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(fd.cFileName);
+						//*ptr = temp;
+					}
+				} while (FindNextFile(hfind, &fd));
+				FindClose(hfind);
+			}
+			#endif
 			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0'){
 				auto is_name = [name](const char* a){
 					return strcmp(a, std::string(name).c_str()) == 0; //remove trailing characters we left behind lol
@@ -539,6 +598,7 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<const char*> options;
+			#ifdef __linux__
 			DIR *d;
   			struct dirent *dir;
   			d = opendir(CONFIG_PATH);
@@ -555,6 +615,25 @@ int main(int argc, char **argv) {
     			}
     		closedir(d);
  			 }
+			  #endif
+			#ifdef _WIN32
+			HANDLE hfind;
+			WIN32_FIND_DATA fd;
+			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
+			if (hfind != INVALID_HANDLE_VALUE) {
+				do {
+					//printf("%s\n", fd.cFileName);
+					char* ptr = strrchr(fd.cFileName, '.');
+					if(ptr && strcmp(ptr, ".txt") == 0){
+						//char temp = *ptr;
+						*ptr = '\0'; 
+						options.push_back(fd.cFileName);
+						//*ptr = temp;
+					}
+				} while (FindNextFile(hfind, &fd));
+				FindClose(hfind);
+			}
+			#endif
 			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
 			if(ImGui::Button("Delete!") && options.size() > 0){
 				remove((std::string(CONFIG_PATH)+std::string(options[preset_index])+".txt").c_str());
@@ -661,8 +740,10 @@ int main(int argc, char **argv) {
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 
+#ifdef __linux__
 	Mix_CloseAudio();
 	Mix_Quit();
+#endif
 	hid_close(handle);
 	hid_exit();
 	delete outReport;

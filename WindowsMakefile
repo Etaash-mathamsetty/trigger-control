@@ -1,15 +1,15 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 OBJS = trigger-control.o imgui.o imgui_impl_opengl3.o imgui_impl_sdl.o imgui_demo.o imgui_draw.o imgui_tables.o imgui_widgets.o
-LIBRARIES = `pkg-config --libs --cflags SDL2_mixer` `pkg-config --cflags --libs hidapi-hidraw` `pkg-config --cflags --libs glew` `pkg-config --libs --cflags glib-2.0` -Wl,--no-as-needed -ldl
-
-CFLAGS = -O2
+CROSS=x86_64-w64-mingw32-
+LIBRARIES = -lmingw32 -lopengl32 `$(CROSS)pkg-config --libs --cflags sdl2` `$(CROSS)pkg-config --libs --cflags hidapi` `$(CROSS)pkg-config --libs --cflags glew` `$(CROSS)pkg-config --libs --cflags freeglut`
+CFLAGS = -O2 -mwindows 
 LDFLAGS = $(LIBRARIES)
 
 all:	trigger-control
 
 trigger-control:	$(OBJS)
-	$(CXX) -o $@ $^  $(LDFLAGS) 
+	$(CXX) -o $@ $^ $(LDFLAGS)
 	$(EXTRA_CMDS)
 
 %.o:	$(PROJECT_ROOT)%.cpp
