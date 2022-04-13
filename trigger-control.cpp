@@ -29,7 +29,7 @@
 #include <algorithm>
 
 const char* VERSION = "Version 1.3 beta";
-char* CONFIG_PATH = new char[MAX_PATH];
+char* CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
