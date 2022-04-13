@@ -30,7 +30,7 @@
 #include <vector>
 #include <algorithm>
 
-const char* VERSION = "Version 1.3 beta";
+const char* VERSION = "Version 1.3.1 alpha";
 char* CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
