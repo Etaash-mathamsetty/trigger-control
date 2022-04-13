@@ -16,6 +16,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winuser.h>
+#include <shlobj.h>
 #endif
 #include <iostream>
 #ifdef __linux__
@@ -216,8 +217,13 @@ int main(int argc, char **argv) {
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
 	#endif
 	#ifdef _WIN32
-	strcpy(CONFIG_PATH, getenv("APPDATA"));
-	strcat(CONFIG_PATH, "\\trigger-control\\");
+	//strcpy(CONFIG_PATH, getenv("APPDATA"));
+	WCHAR* path = new WCHAR[PATH_MAX];
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
+	sprintf(CONFIG_PATH, "%ls\\trigger-control\\", path);
+	//strcat(CONFIG_PATH, "\\trigger-control\\");
+	printf(CONFIG_PATH);
+	delete path;
 	#endif
 	hid_init();
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
@@ -462,14 +468,9 @@ int main(int argc, char **argv) {
 			hfind = FindFirstFile((std::string(CONFIG_PATH) + "*.txt").c_str(), &fd);
 			if (hfind != INVALID_HANDLE_VALUE) {
 				do {
-					//printf("%s\n", fd.cFileName);
 					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(fd.cFileName);
-						//*ptr = temp;
-					}
+					*ptr = '\0';
+					options.push_back(fd.cFileName);
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
@@ -557,12 +558,10 @@ int main(int argc, char **argv) {
 				do {
 					//printf("%s\n", fd.cFileName);
 					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
 						//char temp = *ptr;
 						*ptr = '\0'; 
 						options.push_back(fd.cFileName);
 						//*ptr = temp;
-					}
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
@@ -638,12 +637,11 @@ int main(int argc, char **argv) {
 				do {
 					//printf("%s\n", fd.cFileName);
 					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
 						//char temp = *ptr;
 						*ptr = '\0'; 
 						options.push_back(fd.cFileName);
 						//*ptr = temp;
-					}
+					
 				} while (FindNextFile(hfind, &fd));
 				FindClose(hfind);
 			}
