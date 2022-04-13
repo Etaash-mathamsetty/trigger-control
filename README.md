@@ -42,4 +42,31 @@ make
 sudo cp trigger-control /usr/bin
 ```
 
+**Cross Compile for Windows**  
+I recommend arch linux for this, but try your luck with any other distro  
+first, clone the repo, then run the following commands(with any AUR helper)  
+```
+yay -S mingw-w64-glew
+yay -S mingw-w64-sdl2
+yay -S mingw-w64-hidapi
+```
+remove glu dependencies from glew.pc  
+```
+sudo nano /usr/i686-w64-mingw32/lib/pkgconfig/glew.pc
+sudo nano /usr/x86_64-w64-mingw32/lib/pkgconfig/glew.pc
+```
+then run,  
+```
+./windows-compile.sh
+```
+you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
+libwinpthread-1.dll  
+libhidapi-0.dll  
+SDL2.dll  
+glew32.dll  
+libstdc++-6.dll  
+libgcc_s_seh-1.dll  
+from  
+`/usr/x86_64-w64-mingw32/bin/`  
+to the folder the git repo is in, and now you should be able to run the windows version of the program... hopefully  
 based on https://github.com/flok/pydualsense  
