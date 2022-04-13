@@ -69,4 +69,5 @@ libgcc_s_seh-1.dll
 from  
 `/usr/x86_64-w64-mingw32/bin/`  
 to the folder the git repo is in, and now you should be able to run the windows version of the program... hopefully  
+ngl, shoulda used python lol  
 based on https://github.com/flok/pydualsense  
