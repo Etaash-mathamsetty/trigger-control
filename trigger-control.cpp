@@ -10,7 +10,13 @@
 #include "imgui_impl_opengl3.h"
 #include "icon.h"
 #include "crc32.h"
+#ifdef __linux__
 #include <glib-2.0/glib.h>
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#include <winuser.h>
+#endif
 #include <iostream>
 #include <SDL2/SDL_mixer.h>
 #include <sys/types.h>
@@ -83,10 +89,15 @@ void CenteredText(const char* text)
 }
 
 void error_sound(){
+		#ifdef __linux__
 		g_autofree gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
 		g_autofree gchar* path = g_build_filename(name, "bell-terminal.ogg", NULL);
 		Mix_Chunk* sound = Mix_LoadWAV((const char*)path);
 		Mix_PlayChannel(-1, sound,0);
+		#endif
+		#ifdef _WIN32
+		MessageBeep(MB_ICONERROR);
+		#endif
 }
 
 //I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
