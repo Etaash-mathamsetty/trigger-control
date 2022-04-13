@@ -30,7 +30,7 @@
 #include <vector>
 #include <algorithm>
 
-const char* VERSION = "Version 1.3.1 alpha";
+const char* VERSION = "Version 1.3.1 beta";
 char* CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
 	#endif
 	hid_init();
 	#ifdef _WIN32
-	ImGui_ImplWin32_EnableDpiAwareness();
+	//ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
 	#endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	#ifdef _WIN32
@@ -278,10 +278,17 @@ int main(int argc, char **argv) {
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
 	    SDL_GL_SetSwapInterval(1);
+		float dpi_scaling = 1.0f;
+		#ifdef _WIN32
 		float dpi_x, dpi_y, dpi_z;
 		SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
-		float dpi_scaling = dpi_x / 96.0f;
+		dpi_scaling = dpi_x / 96.0f;
+		//std::cout << dpi_scaling << std::endl;
+		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 		ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
+		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 48.0f * dpi_scaling);
+		io.FontGlobalScale = 0.5f;
+		#endif
 		//float dpi = ImGui::
 		//struct hid_device_info *devs, *cur_dev;
 		//devs = hid_enumerate(0x0,0x0);
