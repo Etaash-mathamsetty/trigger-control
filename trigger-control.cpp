@@ -210,7 +210,7 @@ int get_index(int mode){
 }
 
 int main(int argc, char **argv) {
-	memset(CONFIG_PATH, 0, 100);
+	memset(CONFIG_PATH, 0, PATH_MAX);
 	#ifdef __linux__
 	strcpy(CONFIG_PATH, getenv("HOME"));
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
