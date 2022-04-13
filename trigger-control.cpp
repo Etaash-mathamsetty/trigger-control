@@ -120,6 +120,7 @@ int find_dev(hid_device** handle, bool* bt){
 	while (cur_dev) {
 		if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
 			break;
+			//printf("found 1\n");
 		}
 		cur_dev = cur_dev->next;
 	}
@@ -128,17 +129,30 @@ int find_dev(hid_device** handle, bool* bt){
 	else{
 		return -1;
 	}
+	// wprintf(hid_error(*handle));
+	// putchar('\n');
 	hid_free_enumeration(dev);
+	//printf("device found!\n");
+	//this is a temp fix, since I don't know how to get this to work on windows
+	#ifdef __linux__
 	uint8_t buf[20] = {0};
 	buf[0] = 0x09;
 	int _res = hid_get_feature_report(*handle, buf, 20);
 	if (_res != sizeof(buf)) {
 	      fprintf(stderr, "Invalid feature report\n");
+		  wprintf(hid_error(*handle));
+		  putchar('\n');
 	      //return false;
 		  return -1;
-		  //happens when bluetooth is acting sus
+		  //happens when bluetooth is acting sus and on windows too aparently
 	}
-	*bt = *(uint32_t*)&buf[16] != 0;
+	else{
+		*bt = *(uint32_t*)&buf[16] != 0;
+	}
+	#endif
+	#ifdef _WIN32
+	*bt = false;
+	#endif
 	//printf("%ls\n", hid_error(*handle));
 	return 0;
 }
