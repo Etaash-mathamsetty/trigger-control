@@ -1,0 +1,1 @@
+make -fDebugMakefile $1
