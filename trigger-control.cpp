@@ -29,15 +29,19 @@
 //#include <pwd.h>
 #include <vector>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
+#include <locale>
+#include <codecvt>
 
 const char* VERSION = "Version 1.3.1 beta";
 char* CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
 enum dualsense_modes{
-    Off = 0x0, //# no resistance
-    Rigid = 0x1, //# continous resistance
-    Pulse = 0x2, //# section resistance
+    Off = 0x0, //no resistance
+    Rigid = 0x1, //continous resistance
+    Pulse = 0x2, //section resistance
     Rigid_A = 0x1 | 0x20,
     Rigid_B = 0x1 | 0x04,
     Rigid_AB = 0x1 | 0x20 | 0x04,
@@ -60,7 +64,7 @@ void load_preset(uint8_t* outReport,  bool bt, const char* name){
 		#endif
 	}
 	std::string path = std::string(CONFIG_PATH);
-	path += std::string(name); //remember that \0 and then "txt", yeah... this fixes that problem
+	path += name;
 	path += ".txt";
 	//std::cout << path << std::endl;
 	FILE* f = fopen(path.c_str(), "rb");
@@ -211,6 +215,13 @@ int get_index(int mode){
 	return 0;
 }
 
+bool VectorOfStringGetter(void* data, int n, const char** out_text)
+{
+  const std::vector<std::string>& v = *(std::vector<std::string>*)data;
+  *out_text = v[n].c_str();
+  return true;
+}
+
 int main(int argc, char **argv) {
 	memset(CONFIG_PATH, 0, PATH_MAX);
 	#ifdef __linux__
@@ -227,6 +238,9 @@ int main(int argc, char **argv) {
 	//sprintf(CONFIG_PATH, "%ls\\trigger-control\\", path);
 	strcat(CONFIG_PATH, "\\trigger-control\\");
 	printf(CONFIG_PATH);
+	//std::ofstream out;
+	//out.open("test.file");
+	//out << CONFIG_PATH << std::endl;
 	//delete path;
 	#endif
 	hid_init();
@@ -278,11 +292,11 @@ int main(int argc, char **argv) {
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
 	    ImGui_ImplOpenGL3_Init("#version 150");
 	    SDL_GL_SetSwapInterval(1);
-		float dpi_scaling = 1.0f;
+		//float dpi_scaling = 1.0f;
 		#ifdef _WIN32
 		float dpi_x, dpi_y, dpi_z;
 		SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
-		dpi_scaling = dpi_x / 96.0f;
+		float dpi_scaling = dpi_x / 96.0f;
 		//std::cout << dpi_scaling << std::endl;
 		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 		ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
@@ -467,45 +481,25 @@ int main(int argc, char **argv) {
 			_pos.x -= ImGui::GetWindowWidth()/2;
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
-			std::vector<const char*> options;
+			std::vector<std::string> options;
 			#ifdef __linux__
-			DIR *d;
-  			struct dirent *dir;
-  			d = opendir(CONFIG_PATH);
-  			if (d) {
-    			while ((dir = readdir(d)) != NULL) {
-      				//printf("%s\n", dir->d_name);
-					char* ptr = strrchr(dir->d_name, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(dir->d_name);
-						//*ptr = temp;
-					}
-    			}
-    		closedir(d);
- 			 }
-			#endif
-			#ifdef _WIN32
-			HANDLE hfind;
-			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile(CONFIG_PATH, &fd);
-			if (hfind != INVALID_HANDLE_VALUE) {
-				do {
-					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(fd.cFileName);
-						//*ptr = temp;
-					}
-				} while (FindNextFile(hfind, &fd));
-				FindClose(hfind);
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::string filename = file.path().filename();
+				filename = filename.substr(0,filename.find_last_of("."));
+				options.push_back(filename);
 			}
 			#endif
-			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
+			#ifdef _WIN32
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::wstring str = file.path().filename();
+				std::string str2(str.begin(), str.end());
+				str2 = str2.substr(0,str2.find_last_of("."));
+				options.push_back(str2);
+			}
+			#endif
+			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if(ImGui::Button("Load") && options.size() > 0){
-				load_preset(outReport, bt, options[preset_index]);
+				load_preset(outReport, bt, options[preset_index].c_str());
 				right_cur = get_index(outReport[11 + bt]);
 				left_cur = get_index(outReport[22+ bt]);
 				if(!bt)
@@ -558,47 +552,27 @@ int main(int argc, char **argv) {
 			_pos.x -= ImGui::GetWindowWidth()/2;
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
-			
-			std::vector<const char*> options;
+			std::vector<std::string> options;
 			#ifdef __linux__
-			DIR *d;
-  			struct dirent *dir;
-  			d = opendir(CONFIG_PATH);
-  			if (d) {
-    			while ((dir = readdir(d)) != NULL) {
-      				//printf("%s\n", dir->d_name);
-					char* ptr = strrchr(dir->d_name, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(dir->d_name);
-						//*ptr = temp;
-					}
-    			}
-    		closedir(d);
- 			 }
-			#endif
-			#ifdef _WIN32
-			HANDLE hfind;
-			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile(CONFIG_PATH, &fd);
-			if (hfind != INVALID_HANDLE_VALUE) {
-				do {
-					//printf("%s\n", fd.cFileName);
-					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(fd.cFileName);
-						//*ptr = temp;
-					}
-				} while (FindNextFile(hfind, &fd));
-				FindClose(hfind);
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::string filename = file.path().filename();
+				filename = filename.substr(0,filename.find_last_of("."));
+				options.push_back(filename);
 			}
 			#endif
+			#ifdef _WIN32
+			//windows, you are always difficult...
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::wstring str = file.path().filename();
+				std::string str2(str.begin(), str.end());
+				str2 = str2.substr(0,str2.find_last_of("."));
+				options.push_back(str2);
+			}
+
+			#endif
 			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0'){
-				auto is_name = [name](const char* a){
-					return strcmp(a, std::string(name).c_str()) == 0; //remove trailing characters we left behind lol
+				auto is_name = [name](std::string a){
+					return strcmp(a.c_str(), name) == 0; //remove trailing characters we left behind lol
 				};
 				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
 					printf("Preset already exists!\n");
@@ -614,8 +588,8 @@ int main(int argc, char **argv) {
 			}
 
 			if(ImGui::Button("Save") && name[0] != '\0'){
-				auto is_name = [name](const char* a){
-					return strcmp(a, std::string(name).c_str()) == 0; //remove trailing characters that we left behind lol
+				auto is_name = [name](std::string a){
+					return strcmp(a.c_str(), name) == 0; //remove trailing characters that we left behind lol
 				};
 				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
 					printf("Preset already exists!\n");
@@ -640,45 +614,26 @@ int main(int argc, char **argv) {
 			_pos.x -= ImGui::GetWindowWidth()/2;
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
-			std::vector<const char*> options;
+			std::vector<std::string> options;
 			#ifdef __linux__
-			DIR *d;
-  			struct dirent *dir;
-  			d = opendir(CONFIG_PATH);
-  			if (d) {
-    			while ((dir = readdir(d)) != NULL) {
-      				//printf("%s\n", dir->d_name);
-					char* ptr = strrchr(dir->d_name, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(dir->d_name);
-						//*ptr = temp;
-					}
-    			}
-    		closedir(d);
- 			 }
-			  #endif
-			#ifdef _WIN32
-			HANDLE hfind;
-			WIN32_FIND_DATA fd;
-			hfind = FindFirstFile(CONFIG_PATH, &fd);
-			if (hfind != INVALID_HANDLE_VALUE) {
-				do {
-					char* ptr = strrchr(fd.cFileName, '.');
-					if(ptr && strcmp(ptr, ".txt") == 0){
-						//char temp = *ptr;
-						*ptr = '\0'; 
-						options.push_back(fd.cFileName);
-						//*ptr = temp;
-					}
-				} while (FindNextFile(hfind, &fd));
-				FindClose(hfind);
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::string filename = file.path().filename();
+				filename = filename.substr(0,filename.find_last_of("."));
+				options.push_back(filename);
 			}
 			#endif
-			ImGui::Combo("Presets", &preset_index, options.data(), options.size());
+			#ifdef _WIN32
+			//windows, you are always difficult...
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::wstring str = file.path().filename();
+				std::string str2(str.begin(), str.end());
+				str2 = str2.substr(0,str2.find_last_of("."));
+				options.push_back(str2.c_str());
+			}
+			#endif
+			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if(ImGui::Button("Delete!") && options.size() > 0){
-				remove((std::string(CONFIG_PATH)+std::string(options[preset_index])+".txt").c_str());
+				remove((std::string(CONFIG_PATH)+options[preset_index]+".txt").c_str());
 				delete_preset_open = false;
 			}
 			ImGui::EndPopup();
