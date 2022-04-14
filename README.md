@@ -2,7 +2,7 @@
 ![image](https://user-images.githubusercontent.com/45927311/161355061-a773a3e1-c9b3-483b-ab5a-9eef4026885d.png)
 
 
-a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux using a gui  
+a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui  
 ~~currently only works through usb though the controller is detected through bluetooth~~  
 
 now works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)
@@ -43,7 +43,7 @@ sudo cp trigger-control /usr/bin
 ```
 
 **Cross Compile for Windows**  
-I recommend arch linux for this, but try your luck with any other distro  
+I recommend arch linux for this, but you can try your luck with any other distro  
 first, clone the repo, then run the following commands(with any AUR helper)  
 ```
 yay -S mingw-w64-glew
@@ -69,5 +69,10 @@ libgcc_s_seh-1.dll
 from  
 `/usr/x86_64-w64-mingw32/bin/`  
 to the folder the git repo is in, and now you should be able to run the windows version of the program... hopefully  
-ngl, shoulda used python lol  
+  
+things I learned from this:  
+cross compiling is a pain  
+win32 api sucks  
+programming on linux is kinda easy  
+  
 based on https://github.com/flok/pydualsense  
