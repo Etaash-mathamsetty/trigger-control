@@ -492,7 +492,10 @@ int main(int argc, char **argv) {
 			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
 				std::string filename = file.path().filename();
 				filename = filename.substr(0,filename.find_last_of("."));
-				options.push_back(filename);
+				if(file.path().extension() == ".txt"){
+					options.push_back(filename);
+				}
+				//options.push_back(filename);
 			}
 			#endif
 			#ifdef _WIN32
@@ -500,7 +503,10 @@ int main(int argc, char **argv) {
 				std::wstring str = file.path().filename();
 				std::string str2(str.begin(), str.end());
 				str2 = str2.substr(0,str2.find_last_of("."));
-				options.push_back(str2);
+				if(file.path().extension() == L".txt"){
+					options.push_back(str2);
+				}
+			//	options.push_back(str2);
 			}
 			#endif
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
@@ -563,7 +569,10 @@ int main(int argc, char **argv) {
 			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
 				std::string filename = file.path().filename();
 				filename = filename.substr(0,filename.find_last_of("."));
-				options.push_back(filename);
+				if(file.path().extension() == ".txt"){
+					options.push_back(filename);
+				}
+				//options.push_back(filename);
 			}
 			#endif
 			#ifdef _WIN32
@@ -572,7 +581,10 @@ int main(int argc, char **argv) {
 				std::wstring str = file.path().filename();
 				std::string str2(str.begin(), str.end());
 				str2 = str2.substr(0,str2.find_last_of("."));
-				options.push_back(str2);
+				if(file.path().extension() == L".txt"){
+					options.push_back(str2);
+				}
+				//options.push_back(str2);
 			}
 
 			#endif
@@ -625,7 +637,10 @@ int main(int argc, char **argv) {
 			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
 				std::string filename = file.path().filename();
 				filename = filename.substr(0,filename.find_last_of("."));
-				options.push_back(filename);
+				if(file.path().extension() == ".txt"){
+					options.push_back(filename);
+				}
+				//options.push_back(filename);
 			}
 			#endif
 			#ifdef _WIN32
@@ -634,7 +649,10 @@ int main(int argc, char **argv) {
 				std::wstring str = file.path().filename();
 				std::string str2(str.begin(), str.end());
 				str2 = str2.substr(0,str2.find_last_of("."));
-				options.push_back(str2.c_str());
+				if(file.path().extension() == L".txt"){
+					options.push_back(str2);
+				}
+				//options.push_back(str2.c_str());
 			}
 			#endif
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
