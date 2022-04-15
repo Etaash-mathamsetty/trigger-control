@@ -6,7 +6,7 @@ a quick and dirty project that allows you to control the adaptive triggers of th
 ~~currently only works through usb though the controller is detected through bluetooth~~  
 
 now works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)  
-dosen't seem to work atm for ubuntu 20.04 and distros based on it.  
+dosen't seem to work atm for ubuntu 20.04 and distros based on it. (see https://github.com/Etaash-mathamsetty/trigger-control/issues/5)   
 
 libraries:  
 libSDL2  
