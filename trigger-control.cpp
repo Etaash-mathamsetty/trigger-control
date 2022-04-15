@@ -121,7 +121,7 @@ void error_sound(){
 //I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
 int find_dev(hid_device** handle, bool* bt){
 	struct hid_device_info* dev, *cur_dev; 
-	dev = hid_enumerate(0x0, 0x0);
+	dev = hid_enumerate(0x054c, 0x0ce6);
 	cur_dev = dev;
 	while (cur_dev) {
 		if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
@@ -137,28 +137,10 @@ int find_dev(hid_device** handle, bool* bt){
 	}
 	// wprintf(hid_error(*handle));
 	// putchar('\n');
+	//printf("interface %d\n", dev->interface_number);
+	*bt =  (dev->interface_number == -1);
 	hid_free_enumeration(dev);
-	//printf("device found!\n");
-	//this is a temp fix, since I don't know how to get this to work on windows
-	#ifdef __linux__
-	uint8_t buf[20] = {0};
-	buf[0] = 0x09;
-	int _res = hid_get_feature_report(*handle, buf, 20);
-	if (_res != sizeof(buf)) {
-	      fprintf(stderr, "Invalid feature report\n");
-		  wprintf(hid_error(*handle));
-		  putchar('\n');
-	      //return false;
-		  return -1;
-		  //happens when bluetooth is acting sus and on windows too aparently
-	}
-	else{
-		*bt = *(uint32_t*)&buf[16] != 0;
-	}
-	#endif
-	#ifdef _WIN32
-	*bt = false;
-	#endif
+	
 	//printf("%ls\n", hid_error(*handle));
 	return 0;
 }
@@ -303,36 +285,10 @@ int main(int argc, char **argv) {
 		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 48.0f * dpi_scaling);
 		io.FontGlobalScale = 0.5f;
 		#endif
-		//float dpi = ImGui::
-		//struct hid_device_info *devs, *cur_dev;
-		//devs = hid_enumerate(0x0,0x0);
-		//cur_dev = devs;
 		bool bt = false;
 		//char* path = NULL;
 		int preset_index = 0;
 		//here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
-		// while (cur_dev) {
-		// 	if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
-		// 		break;
-		// 	}
-		// 		cur_dev = cur_dev->next;
-		// }
-		// hid_device *handle = hid_open_path(cur_dev->path);
-		// hid_free_enumeration(devs);
-		// //hid_ge		io.DisplaySize = ImVec2(width/dpi, height/dpi);t_feature_report(handle, data, length)
-		// if(handle == NULL){
-		// 	error_sound();
-		// 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
-		// 	exit(EXIT_FAILURE);
-		// }
-		// uint8_t buf[20] = {0};
-		// buf[0] = 0x09;
-		// int _res = hid_get_feature_report(handle, buf, 20);
-	    // if (_res != sizeof(buf)) {
-	    //     fprintf(stderr, "Invalid feature report\n");
-	    //     //return false;
-	    // }
-		// bt = *(uint32_t*)&buf[16] != 0;
 		hid_device* handle;
 		int res = find_dev(&handle, &bt);
 		if(res == -1){
@@ -378,7 +334,7 @@ int main(int argc, char **argv) {
 		{
 		//printf("before seg\n");
 		uint8_t serial;
-		hid_read(handle, &serial, 1); //check if device is still here
+		hid_read_timeout(handle, &serial, 1, 2000); //check if device is still here
 		}
 		//printf("before segfault???\n");
 		const wchar_t* error = hid_error(handle);
