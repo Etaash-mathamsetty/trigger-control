@@ -260,6 +260,7 @@ int main(int argc, char **argv) {
 	bool load_preset_open = false;
 	bool delete_preset_open = false;
 	bool preset_exists = false;
+	bool options_open = false;
 			char name[100];	
 			//name.reserve(100);
 	IMGUI_CHECKVERSION();
@@ -398,7 +399,7 @@ int main(int argc, char **argv) {
 		}
 		if(ImGui::BeginMenu("Tools")){
 			if(ImGui::MenuItem("Options")){
-
+				options_open = true;
 			}
 			ImGui::EndMenu();
 		}
@@ -423,6 +424,9 @@ int main(int argc, char **argv) {
 		}
 		if(delete_preset_open){
 			ImGui::OpenPopup("Delete Preset");
+		}
+		if(options_open){
+			ImGui::OpenPopup("Options");
 		}
 
 		if(ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
@@ -598,6 +602,20 @@ int main(int argc, char **argv) {
 				remove((std::string(CONFIG_PATH)+options[preset_index]+".txt").c_str());
 				delete_preset_open = false;
 			}
+			ImGui::EndPopup();
+		}
+
+		if(ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(500,500),ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth()/2;
+			_pos.y -= ImGui::GetWindowHeight()/2;
+			ImGui::SetWindowPos(_pos);
+			ImGui::Text("It's Empty here :(");
+			if(ImGui::Button("Close")){
+				options_open = false;
+			}
+
 			ImGui::EndPopup();
 		}
 	    if(ImGui::Button("Reset")){
