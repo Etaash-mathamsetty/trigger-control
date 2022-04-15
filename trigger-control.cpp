@@ -334,11 +334,17 @@ int main(int argc, char **argv) {
 		{
 		//printf("before seg\n");
 		uint8_t serial;
-		hid_read_timeout(handle, &serial, 1, 2000); //check if device is still here
+		hid_read(handle, &serial, 1); //check if device is still here
 		}
 		//printf("before segfault???\n");
 		const wchar_t* error = hid_error(handle);
 		if(wcscmp(error, L"Success") != 0){
+			#ifdef __linux__
+			sleep(1);
+			#endif
+			#ifdef _WIN32
+			Sleep(1000);
+			#endif
 			//printf("here!\n");
 			hid_close(handle);
 			int res = find_dev(&handle, &bt);
