@@ -60,12 +60,12 @@ then run,
 ./windows-compile.sh
 ```
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
-libwinpthread-1.dll  
-libhidapi-0.dll  
-SDL2.dll  
-glew32.dll  
-libstdc++-6.dll  
-libgcc_s_seh-1.dll  
+`libwinpthread-1.dll`  
+`libhidapi-0.dll`  
+`SDL2.dll`  
+`glew32.dll`  
+`libstdc++-6.dll`  
+`libgcc_s_seh-1.dll`  
 from  
 `/usr/x86_64-w64-mingw32/bin/`  
 to the folder the git repo is in, and now you should be able to run the windows version of the program... hopefully  
