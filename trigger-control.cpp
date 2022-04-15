@@ -676,7 +676,8 @@ int main(int argc, char **argv) {
 				config[0] = 0;
 			}
 			ImGui::SameLine();
-			if(ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth()/2-10,25))){
+			//fix spacing between edge and button
+			if(ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth()/2-14,25))){
 				ImGui::StyleColorsDark();
 				config[0] = 1;
 			}
