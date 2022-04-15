@@ -99,6 +99,50 @@ void save_preset(const uint8_t* outReport, bool bt, const char* name){
 	fclose(f);
 }	
 
+void write_config(char* value, size_t size){
+	struct stat info;
+	stat(CONFIG_PATH, &info);
+	if(info.st_mode & S_IFDIR){
+	}
+	else{
+		#ifdef __linux__
+		mkdir(CONFIG_PATH, 0777);
+		#endif
+		#ifdef _WIN32
+		mkdir(CONFIG_PATH);
+		#endif
+	}
+	std::string path = std::string(CONFIG_PATH) + "config.ini";
+	FILE* f = fopen(path.c_str(), "wb");
+	if(!f)
+		return;
+	fseek(f, 0, SEEK_SET);
+	fwrite(value, sizeof(value), size, f);
+	fclose(f);
+}
+
+void read_config(char** value, size_t size){
+	struct stat info;
+	stat(CONFIG_PATH, &info);
+	if(info.st_mode & S_IFDIR){
+	}
+	else{
+		#ifdef __linux__
+		mkdir(CONFIG_PATH, 0777);
+		#endif
+		#ifdef _WIN32
+		mkdir(CONFIG_PATH);
+		#endif
+	}
+	std::string path = std::string(CONFIG_PATH) + "config.ini";
+	FILE* f = fopen(path.c_str(), "rb");
+	if(!f)
+		return;
+	fseek(f, 0, SEEK_SET);
+	fread(*value, sizeof(**value), size, f);
+	fclose(f);
+}
+
 void CenteredText(const char* text)
 {
 	ImVec2 size = ImGui::GetWindowSize();
@@ -197,6 +241,7 @@ int get_index(int mode){
 	return 0;
 }
 
+//this code is satisfying to look at
 bool VectorOfStringGetter(void* data, int n, const char** out_text)
 {
   const std::vector<std::string>& v = *(std::vector<std::string>*)data;
@@ -211,30 +256,17 @@ int main(int argc, char **argv) {
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
 	#endif
 	#ifdef _WIN32
-	//printf(getenv("APPDATA"));
-	//putchar('\n');
 	strcpy(CONFIG_PATH, getenv("APPDATA"));
-	//WCHAR* path = new WCHAR[PATH_MAX];
-	//SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
-	//MessageBeep(MB_ICONERROR);
-	//sprintf(CONFIG_PATH, "%ls\\trigger-control\\", path);
 	strcat(CONFIG_PATH, "\\trigger-control\\");
-	printf(CONFIG_PATH);
-	//std::ofstream out;
-	//out.open("test.file");
-	//out << CONFIG_PATH << std::endl;
-	//delete path;
+	//printf(CONFIG_PATH);
 	#endif
 	hid_init();
 	#ifdef _WIN32
 	//ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
 	#endif
+	const size_t config_size = 10;
+	char*config = (char*)alloca(sizeof(char) * config_size);
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
-	#ifdef _WIN32
-	freopen("CON", "w", stdout);
-	freopen("CON", "w", stderr);
-	freopen("CON","r",stdin);
-	#endif
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 300, 250);
@@ -266,7 +298,14 @@ int main(int argc, char **argv) {
 	IMGUI_CHECKVERSION();
 	    ImGui::CreateContext();
 	    ImGuiIO& io = ImGui::GetIO(); (void)io;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+		read_config(&config, config_size);
+		if(config[0] == 1)
 	    ImGui::StyleColorsDark();
+		else
+		ImGui::StyleColorsLight();
+		
 		ImGui::GetStyle().WindowRounding = 5.0f;
 		ImGui::GetStyle().PopupRounding = 5.0f;
 		ImGui::GetStyle().FrameRounding = 5.0f;
@@ -370,6 +409,7 @@ int main(int argc, char **argv) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,0.0f);
 	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
+		ImGui::ShowDemoWindow();
 	    if(ImGui::Checkbox("Using Bluetooth?",&bt)){
 			if(bt){
 				memmove(&outReport[12], &outReport[11] , 30 -10);
@@ -611,7 +651,18 @@ int main(int argc, char **argv) {
 			_pos.x -= ImGui::GetWindowWidth()/2;
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
-			ImGui::Text("It's Empty here :(");
+			//ImGui::Text("It's Empty here :(");
+		
+			if(ImGui::Button("Light Mode", ImVec2(ImGui::GetWindowWidth()/2-10,25))){
+				ImGui::StyleColorsLight();
+				config[0] = 0;
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth()/2-10,25))){
+				ImGui::StyleColorsDark();
+				config[0] = 1;
+			}
+			
 			if(ImGui::Button("Close")){
 				options_open = false;
 			}
@@ -726,6 +777,7 @@ int main(int argc, char **argv) {
 	delete outReport;
 	SDL_Quit();
 	remove("imgui.ini");
+	write_config(config, config_size);
 	//program termination should free memory I forgot to free :D
 	return 0;
 }
