@@ -34,7 +34,7 @@
 #include <locale>
 #include <codecvt>
 
-const char* VERSION = "Version 1.3.1 beta";
+const char* VERSION = "Version 1.3.2";
 char* CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
