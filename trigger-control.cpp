@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
 	    ImGui::StyleColorsDark();
 		else
 		ImGui::StyleColorsLight();
-		
+
 		ImGui::GetStyle().WindowRounding = 5.0f;
 		ImGui::GetStyle().PopupRounding = 5.0f;
 		ImGui::GetStyle().FrameRounding = 5.0f;
@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,0.0f);
 	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
-		ImGui::ShowDemoWindow();
+	//	ImGui::ShowDemoWindow();
 	    if(ImGui::Checkbox("Using Bluetooth?",&bt)){
 			if(bt){
 				memmove(&outReport[12], &outReport[11] , 30 -10);
