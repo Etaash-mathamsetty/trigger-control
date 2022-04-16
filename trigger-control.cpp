@@ -436,6 +436,7 @@ int main(int argc, char **argv) {
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","Controller Disconnected! (or something else happened)",window);
 			exit(EXIT_FAILURE);
 			}
+			apply_effect(handle, bt, outReport);
 		}
 
 	    glClearColor(0.f, 0.f, 0.f, 0.f);
@@ -496,7 +497,6 @@ int main(int argc, char **argv) {
 		}
 		if(popup_open)
 		{
-			//ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing);
 			ImGui::OpenPopup("About");
 		}
 		if(load_preset_open ){
