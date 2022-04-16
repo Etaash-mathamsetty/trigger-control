@@ -249,6 +249,55 @@ bool VectorOfStringGetter(void* data, int n, const char** out_text)
   return true;
 }
 
+void apply_effect(hid_device* dev, bool bt, uint8_t* outReport){
+	if(!dev)
+		return;
+			if(!bt){
+		    outReport[0] = 0x2;
+		    outReport[1] = 0x04 | 0x08;
+		    outReport[2] = 0x40;
+			hid_write(dev,outReport, 65);
+		    }
+		    else{
+		    outReport[0] = 0x31; //thx ds4windows
+		    outReport[1] = 0x2;
+		    outReport[2] = 0x04 | 0x08;
+			outReport[3] = 0x40;
+				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
+				crc = ~crc32_le(crc, outReport, 74);
+				//printf("crc: %u\n", crc);
+                outReport[74] = (uint8_t)crc;
+                outReport[75] = (uint8_t)(crc >> 8);
+                outReport[76] = (uint8_t)(crc >> 16);
+                outReport[77] = (uint8_t)(crc >> 24);
+				hid_write(dev,outReport, 78);
+		    }
+}
+
+void get_presets(std::vector<std::string>& options){
+#ifdef __linux__
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::string filename = file.path().filename();
+				filename = filename.substr(0,filename.find_last_of("."));
+				if(file.path().extension() == ".txt"){
+					options.push_back(filename);
+				}
+				//options.push_back(filename);
+			}
+			#endif
+			#ifdef _WIN32
+			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
+				std::wstring str = file.path().filename();
+				std::string str2(str.begin(), str.end());
+				str2 = str2.substr(0,str2.find_last_of("."));
+				if(file.path().extension() == L".txt"){
+					options.push_back(str2);
+				}
+			//	options.push_back(str2);
+			}
+			#endif
+}
+
 int main(int argc, char **argv) {
 	memset(CONFIG_PATH, 0, PATH_MAX);
 	#ifdef __linux__
@@ -322,7 +371,7 @@ int main(int argc, char **argv) {
 		//std::cout << dpi_scaling << std::endl;
 		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 		ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
-		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 48.0f * dpi_scaling);
+		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 36.0f * dpi_scaling);
 		io.FontGlobalScale = 0.5f;
 		#endif
 		bool bt = false;
@@ -482,44 +531,13 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
-			#ifdef __linux__
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::string filename = file.path().filename();
-				filename = filename.substr(0,filename.find_last_of("."));
-				if(file.path().extension() == ".txt"){
-					options.push_back(filename);
-				}
-				//options.push_back(filename);
-			}
-			#endif
-			#ifdef _WIN32
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::wstring str = file.path().filename();
-				std::string str2(str.begin(), str.end());
-				str2 = str2.substr(0,str2.find_last_of("."));
-				if(file.path().extension() == L".txt"){
-					options.push_back(str2);
-				}
-			//	options.push_back(str2);
-			}
-			#endif
+			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if(ImGui::Button("Load") && options.size() > 0){
 				load_preset(outReport, bt, options[preset_index].c_str());
 				right_cur = get_index(outReport[11 + bt]);
 				left_cur = get_index(outReport[22+ bt]);
-				if(!bt)
-				hid_write(handle,outReport,65);
-				else{
-				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
-				crc = ~crc32_le(crc, outReport, 74);
-				printf("crc: %u\n", crc);
-                outReport[74] = (uint8_t)crc;
-                outReport[75] = (uint8_t)(crc >> 8);
-                outReport[76] = (uint8_t)(crc >> 16);
-                outReport[77] = (uint8_t)(crc >> 24);
-				hid_write(handle,outReport, 78);
-			}
+				apply_effect(handle, bt, outReport);
 				load_preset_open = false;
 			}
 
@@ -559,32 +577,10 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
-			#ifdef __linux__
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::string filename = file.path().filename();
-				filename = filename.substr(0,filename.find_last_of("."));
-				if(file.path().extension() == ".txt"){
-					options.push_back(filename);
-				}
-				//options.push_back(filename);
-			}
-			#endif
-			#ifdef _WIN32
-			//windows, you are always difficult...
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::wstring str = file.path().filename();
-				std::string str2(str.begin(), str.end());
-				str2 = str2.substr(0,str2.find_last_of("."));
-				if(file.path().extension() == L".txt"){
-					options.push_back(str2);
-				}
-				//options.push_back(str2);
-			}
-
-			#endif
+			get_presets(options);
 			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0'){
 				auto is_name = [name](std::string a){
-					return strcmp(a.c_str(), name) == 0; //remove trailing characters we left behind lol
+					return strcmp(a.c_str(), name) == 0; 
 				};
 				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
 					printf("Preset already exists!\n");
@@ -601,7 +597,7 @@ int main(int argc, char **argv) {
 
 			if(ImGui::Button("Save") && name[0] != '\0'){
 				auto is_name = [name](std::string a){
-					return strcmp(a.c_str(), name) == 0; //remove trailing characters that we left behind lol
+					return strcmp(a.c_str(), name) == 0; 
 				};
 				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
 					printf("Preset already exists!\n");
@@ -627,28 +623,7 @@ int main(int argc, char **argv) {
 			_pos.y -= ImGui::GetWindowHeight()/2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
-			#ifdef __linux__
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::string filename = file.path().filename();
-				filename = filename.substr(0,filename.find_last_of("."));
-				if(file.path().extension() == ".txt"){
-					options.push_back(filename);
-				}
-				//options.push_back(filename);
-			}
-			#endif
-			#ifdef _WIN32
-			//windows, you are always difficult...
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::wstring str = file.path().filename();
-				std::string str2(str.begin(), str.end());
-				str2 = str2.substr(0,str2.find_last_of("."));
-				if(file.path().extension() == L".txt"){
-					options.push_back(str2);
-				}
-				//options.push_back(str2.c_str());
-			}
-			#endif
+			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if(ImGui::Button("Delete!") && options.size() > 0){
 				remove((std::string(CONFIG_PATH)+options[preset_index]+".txt").c_str());
@@ -684,36 +659,12 @@ int main(int argc, char **argv) {
 		}
 	    if(ImGui::Button("Reset")){
 		    memset(outReport, 0, 78);
-		    if(!bt){
-		    outReport[0] = 0x2;
-		    outReport[1] = 0x04 | 0x08;
-		    outReport[2] = 0x40;
-		    }
-		    if(bt){
-		    outReport[0] = 0x31; //thx ds4windows
-		    outReport[1] = 0x2;
-		    outReport[2] = 0x04 | 0x08;
-			outReport[3] = 0x40;
-		    }
 		    outReport[11 + bt] = (uint8_t)dualsense_modes::Rigid_B;
 		    outReport[22 + bt] = (uint8_t)dualsense_modes::Rigid_B;
-			if(!bt)
-			hid_write(handle,outReport,65);
-			else{
-
-				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
-				crc = ~crc32_le(crc, outReport, 74);
-				printf("crc: %u\n", crc);
-                outReport[74] = (uint8_t)crc;
-                outReport[75] = (uint8_t)(crc >> 8);
-                outReport[76] = (uint8_t)(crc >> 16);
-                outReport[77] = (uint8_t)(crc >> 24);
-				hid_write(handle,outReport, 78);
-
-			}
+			apply_effect(handle, bt, outReport);
 			left_cur = 0;
 			right_cur = 0;
-			printf("reset!\n");
+			//printf("reset!\n");
 		    outReport[11 + bt] = (uint8_t)0;
 		    outReport[22 + bt] = (uint8_t)0;
 	    }
@@ -742,29 +693,7 @@ int main(int argc, char **argv) {
 	    ImGui::SliderScalar("Left Actuation Frequency", ImGuiDataType_U8,&outReport[30+ bt], &min, &max, "%d", 0);
 	    if(ImGui::Button("Apply")){
 	    	printf("applied! bt: %d\n", bt);
-	    	 if(!bt){
-	    			    outReport[0] = 0x2;
-	    			    outReport[1] = 0x04 | 0x08;
-	    			    outReport[2] = 0x40;
-	    			    }
-	    			    if(bt){
-	    			    outReport[0] = 0x31; //thx ds4windows
-	    			    outReport[1] = 0x2;
-	    			    outReport[2] = 0x04 | 0x08;
-	    				outReport[3] = 0x40;
-	    			    }
-	    	if(!bt)
-	    	hid_write(handle,outReport,65);
-	    	else{
-	    		unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
-	    						crc = ~crc32_le(crc, outReport, 74);
-	    						printf("crc: %u\n", crc);
-                outReport[74] = (uint8_t)crc;
-                outReport[75] = (uint8_t)(crc >> 8);
-                outReport[76] = (uint8_t)(crc >> 16);
-                outReport[77] = (uint8_t)(crc >> 24);
-                hid_write(handle, outReport,78);
-	    	}
+	    	apply_effect(handle, bt,outReport);
 	    }
 
 	    ImGui::End();
