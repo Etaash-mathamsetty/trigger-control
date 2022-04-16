@@ -34,163 +34,184 @@
 #include <locale>
 #include <codecvt>
 
-const char* VERSION = "Version 1.3.2";
-char* CONFIG_PATH = new char[PATH_MAX];
+const char *VERSION = "Version 1.3.2";
+char *CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
-enum dualsense_modes{
-    Off = 0x0, //no resistance
-    Rigid = 0x1, //continous resistance
-    Pulse = 0x2, //section resistance
-    Rigid_A = 0x1 | 0x20,
-    Rigid_B = 0x1 | 0x04,
-    Rigid_AB = 0x1 | 0x20 | 0x04,
-    Pulse_A = 0x2 | 0x20,
-    Pulse_B = 0x2 | 0x04,
-    Pulse_AB = 0x2 | 0x20 | 0x04,
+enum dualsense_modes
+{
+	Off = 0x0,	 // no resistance
+	Rigid = 0x1, // continous resistance
+	Pulse = 0x2, // section resistance
+	Rigid_A = 0x1 | 0x20,
+	Rigid_B = 0x1 | 0x04,
+	Rigid_AB = 0x1 | 0x20 | 0x04,
+	Pulse_A = 0x2 | 0x20,
+	Pulse_B = 0x2 | 0x04,
+	Pulse_AB = 0x2 | 0x20 | 0x04,
 };
 
-void load_preset(uint8_t* outReport,  bool bt, const char* name){
+void load_preset(uint8_t *outReport, bool bt, const char *name)
+{
 	struct stat info;
 	stat(CONFIG_PATH, &info);
-	if(info.st_mode & S_IFDIR){
+	if (info.st_mode & S_IFDIR)
+	{
 	}
-	else{
-		#ifdef __linux__
+	else
+	{
+#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
-		#endif
-		#ifdef _WIN32
+#endif
+#ifdef _WIN32
 		mkdir(CONFIG_PATH);
-		#endif
+#endif
 	}
 	std::string path = std::string(CONFIG_PATH);
 	path += name;
 	path += ".txt";
-	//std::cout << path << std::endl;
-	FILE* f = fopen(path.c_str(), "rb");
-	if(f){
-		fread(outReport + 11 + bt, sizeof(*outReport), 30 -10, f);
+	// std::cout << path << std::endl;
+	FILE *f = fopen(path.c_str(), "rb");
+	if (f)
+	{
+		fread(outReport + 11 + bt, sizeof(*outReport), 30 - 10, f);
 		fclose(f);
 	}
-	//printf("stub!\n");
+	// printf("stub!\n");
 }
 
-void save_preset(const uint8_t* outReport, bool bt, const char* name){
+void save_preset(const uint8_t *outReport, bool bt, const char *name)
+{
 	struct stat info;
 	stat(CONFIG_PATH, &info);
-	if(info.st_mode & S_IFDIR){
+	if (info.st_mode & S_IFDIR)
+	{
 	}
-	else{
-		#ifdef __linux__
+	else
+	{
+#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
-		#endif
-		#ifdef _WIN32
+#endif
+#ifdef _WIN32
 		mkdir(CONFIG_PATH);
-		#endif
+#endif
 	}
-	//printf("stub!\n");
+	// printf("stub!\n");
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
-	//open(path.c_str(), O_RDWR | O_CREAT, 0777);
-	FILE* f = fopen(path.c_str(), "wb");
-	if(!f)
+	// open(path.c_str(), O_RDWR | O_CREAT, 0777);
+	FILE *f = fopen(path.c_str(), "wb");
+	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
-	fwrite(outReport + 11 + bt, sizeof(*outReport), 30 -10, f);
+	fwrite(outReport + 11 + bt, sizeof(*outReport), 30 - 10, f);
 	fclose(f);
-}	
+}
 
-void write_config(char* value, size_t size){
+void write_config(char *value, size_t size)
+{
 	struct stat info;
 	stat(CONFIG_PATH, &info);
-	if(info.st_mode & S_IFDIR){
+	if (info.st_mode & S_IFDIR)
+	{
 	}
-	else{
-		#ifdef __linux__
+	else
+	{
+#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
-		#endif
-		#ifdef _WIN32
+#endif
+#ifdef _WIN32
 		mkdir(CONFIG_PATH);
-		#endif
+#endif
 	}
 	std::string path = std::string(CONFIG_PATH) + "config.ini";
-	FILE* f = fopen(path.c_str(), "wb");
-	if(!f)
+	FILE *f = fopen(path.c_str(), "wb");
+	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
 	fwrite(value, sizeof(value), size, f);
 	fclose(f);
 }
 
-void read_config(char** value, size_t size){
+void read_config(char **value, size_t size)
+{
 	struct stat info;
 	stat(CONFIG_PATH, &info);
-	if(info.st_mode & S_IFDIR){
+	if (info.st_mode & S_IFDIR)
+	{
 	}
-	else{
-		#ifdef __linux__
+	else
+	{
+#ifdef __linux__
 		mkdir(CONFIG_PATH, 0777);
-		#endif
-		#ifdef _WIN32
+#endif
+#ifdef _WIN32
 		mkdir(CONFIG_PATH);
-		#endif
+#endif
 	}
 	std::string path = std::string(CONFIG_PATH) + "config.ini";
-	FILE* f = fopen(path.c_str(), "rb");
-	if(!f)
+	FILE *f = fopen(path.c_str(), "rb");
+	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
 	fread(*value, sizeof(**value), size, f);
 	fclose(f);
 }
 
-void CenteredText(const char* text)
+void CenteredText(const char *text)
 {
 	ImVec2 size = ImGui::GetWindowSize();
 	ImGui::SetCursorPosX((size.x - ImGui::CalcTextSize(text).x) / 2);
 	ImGui::Text(text);
 }
 
-void error_sound(){
-		#ifdef __linux__
-		g_autofree gchar* name = g_build_filename(g_get_user_data_dir(), "sounds","__custom" ,NULL);
-		g_autofree gchar* path = g_build_filename(name, "bell-terminal.ogg", NULL);
-		Mix_Chunk* sound = Mix_LoadWAV((const char*)path);
-		Mix_PlayChannel(-1, sound,0);
-		#endif
-		#ifdef _WIN32
-		MessageBeep(MB_ICONERROR);
-		#endif
+void error_sound()
+{
+#ifdef __linux__
+	g_autofree gchar *name = g_build_filename(g_get_user_data_dir(), "sounds", "__custom", NULL);
+	g_autofree gchar *path = g_build_filename(name, "bell-terminal.ogg", NULL);
+	Mix_Chunk *sound = Mix_LoadWAV((const char *)path);
+	Mix_PlayChannel(-1, sound, 0);
+#endif
+#ifdef _WIN32
+	MessageBeep(MB_ICONERROR);
+#endif
 }
 
-//I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
-int find_dev(hid_device** handle, bool* bt){
-	struct hid_device_info* dev, *cur_dev; 
+// I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
+int find_dev(hid_device **handle, bool *bt)
+{
+	struct hid_device_info *dev, *cur_dev;
 	dev = hid_enumerate(0x054c, 0x0ce6);
 	cur_dev = dev;
-	while (cur_dev) {
-		if(cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6){
+	while (cur_dev)
+	{
+		if (cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
+		{
 			break;
-			//printf("found 1\n");
+			// printf("found 1\n");
 		}
 		cur_dev = cur_dev->next;
 	}
-	if(cur_dev && cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
+	if (cur_dev && cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
 		*handle = hid_open_path(cur_dev->path);
-	else{
+	else
+	{
 		return -1;
 	}
 	// wprintf(hid_error(*handle));
 	// putchar('\n');
-	//printf("interface %d\n", dev->interface_number);
-	*bt =  (dev->interface_number == -1);
+	// printf("interface %d\n", dev->interface_number);
+	*bt = (dev->interface_number == -1);
 	hid_free_enumeration(dev);
-	
-	//printf("%ls\n", hid_error(*handle));
+
+	// printf("%ls\n", hid_error(*handle));
 	return 0;
 }
 
-int get_mode(int index){
-	switch(index){
+int get_mode(int index)
+{
+	switch (index)
+	{
 	case 0:
 		return dualsense_modes::Off;
 	case 1:
@@ -215,8 +236,10 @@ int get_mode(int index){
 	return 0;
 }
 
-int get_index(int mode){
-	switch(mode){
+int get_index(int mode)
+{
+	switch (mode)
+	{
 	case dualsense_modes::Off:
 		return 0;
 	case dualsense_modes::Rigid:
@@ -241,80 +264,89 @@ int get_index(int mode){
 	return 0;
 }
 
-//this code is satisfying to look at
-bool VectorOfStringGetter(void* data, int n, const char** out_text)
+// this code is satisfying to look at
+bool VectorOfStringGetter(void *data, int n, const char **out_text)
 {
-  const std::vector<std::string>& v = *(std::vector<std::string>*)data;
-  *out_text = v[n].c_str();
-  return true;
+	const std::vector<std::string> &v = *(std::vector<std::string> *)data;
+	*out_text = v[n].c_str();
+	return true;
 }
 
-void apply_effect(hid_device* dev, bool bt, uint8_t* outReport){
-	if(!dev)
+void apply_effect(hid_device *dev, bool bt, uint8_t *outReport)
+{
+	if (!dev)
 		return;
-			if(!bt){
-		    outReport[0] = 0x2;
-		    outReport[1] = 0x04 | 0x08;
-		    outReport[2] = 0x40;
-			hid_write(dev,outReport, 65);
-		    }
-		    else{
-		    outReport[0] = 0x31; //thx ds4windows
-		    outReport[1] = 0x2;
-		    outReport[2] = 0x04 | 0x08;
-			outReport[3] = 0x40;
-				unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
-				crc = ~crc32_le(crc, outReport, 74);
-				//printf("crc: %u\n", crc);
-                outReport[74] = (uint8_t)crc;
-                outReport[75] = (uint8_t)(crc >> 8);
-                outReport[76] = (uint8_t)(crc >> 16);
-                outReport[77] = (uint8_t)(crc >> 24);
-				hid_write(dev,outReport, 78);
-		    }
+	if (!bt)
+	{
+		outReport[0] = 0x2;
+		outReport[1] = 0x04 | 0x08;
+		outReport[2] = 0x40;
+		hid_write(dev, outReport, 65);
+	}
+	else
+	{
+		outReport[0] = 0x31; // thx ds4windows
+		outReport[1] = 0x2;
+		outReport[2] = 0x04 | 0x08;
+		outReport[3] = 0x40;
+		unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
+		crc = ~crc32_le(crc, outReport, 74);
+		// printf("crc: %u\n", crc);
+		outReport[74] = (uint8_t)crc;
+		outReport[75] = (uint8_t)(crc >> 8);
+		outReport[76] = (uint8_t)(crc >> 16);
+		outReport[77] = (uint8_t)(crc >> 24);
+		hid_write(dev, outReport, 78);
+	}
 }
 
-void get_presets(std::vector<std::string>& options){
+void get_presets(std::vector<std::string> &options)
+{
 #ifdef __linux__
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::string filename = file.path().filename();
-				filename = filename.substr(0,filename.find_last_of("."));
-				if(file.path().extension() == ".txt"){
-					options.push_back(filename);
-				}
-				//options.push_back(filename);
-			}
-			#endif
-			#ifdef _WIN32
-			for(const auto& file : std::filesystem::directory_iterator(CONFIG_PATH)){
-				std::wstring str = file.path().filename();
-				std::string str2(str.begin(), str.end());
-				str2 = str2.substr(0,str2.find_last_of("."));
-				if(file.path().extension() == L".txt"){
-					options.push_back(str2);
-				}
-			//	options.push_back(str2);
-			}
-			#endif
+	for (const auto &file : std::filesystem::directory_iterator(CONFIG_PATH))
+	{
+		std::string filename = file.path().filename();
+		filename = filename.substr(0, filename.find_last_of("."));
+		if (file.path().extension() == ".txt")
+		{
+			options.push_back(filename);
+		}
+		// options.push_back(filename);
+	}
+#endif
+#ifdef _WIN32
+	for (const auto &file : std::filesystem::directory_iterator(CONFIG_PATH))
+	{
+		std::wstring str = file.path().filename();
+		std::string str2(str.begin(), str.end());
+		str2 = str2.substr(0, str2.find_last_of("."));
+		if (file.path().extension() == L".txt")
+		{
+			options.push_back(str2);
+		}
+		//	options.push_back(str2);
+	}
+#endif
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	memset(CONFIG_PATH, 0, PATH_MAX);
-	#ifdef __linux__
+#ifdef __linux__
 	strcpy(CONFIG_PATH, getenv("HOME"));
 	strcat(CONFIG_PATH, "/.config/trigger-control/");
-	#endif
-	#ifdef _WIN32
+#endif
+#ifdef _WIN32
 	strcpy(CONFIG_PATH, getenv("APPDATA"));
 	strcat(CONFIG_PATH, "\\trigger-control\\");
-	//printf(CONFIG_PATH);
-	#endif
+// printf(CONFIG_PATH);
+#endif
 	hid_init();
-	#ifdef _WIN32
-	//ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
-	#endif
+#ifdef _WIN32
+// ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
+#endif
 	const size_t config_size = 10;
-	char*config = (char*)alloca(sizeof(char) * config_size);
+	char *config = (char *)alloca(sizeof(char) * config_size);
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
@@ -323,18 +355,19 @@ int main(int argc, char **argv) {
 	assert(window);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
-	SDL_Surface* surface;
-	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 *  gimp_image.width,SDL_PIXELFORMAT_RGBA32 );
+	SDL_Surface *surface;
+	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 * gimp_image.width, SDL_PIXELFORMAT_RGBA32);
 	SDL_SetWindowIcon(window, surface);
-	  SDL_FreeSurface(surface);
-	  #ifdef __linux__
-	 if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 )  < 0){
-		 //error_sound(); lmao cannot play the sound without mixer
-		 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not initialize sdl_mixer",window);
-		 exit(EXIT_FAILURE);
-	 }
-	 #endif
-	glewExperimental=true;
+	SDL_FreeSurface(surface);
+#ifdef __linux__
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+	{
+		// error_sound(); lmao cannot play the sound without mixer
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "could not initialize sdl_mixer", window);
+		exit(EXIT_FAILURE);
+	}
+#endif
+	glewExperimental = true;
 	glewInit();
 	bool popup_open = false;
 	bool save_preset_open = false;
@@ -342,201 +375,227 @@ int main(int argc, char **argv) {
 	bool delete_preset_open = false;
 	bool preset_exists = false;
 	bool options_open = false;
-			char name[100];	
-			//name.reserve(100);
+	char name[100];
+	// name.reserve(100);
 	IMGUI_CHECKVERSION();
-	    ImGui::CreateContext();
-	    ImGuiIO& io = ImGui::GetIO(); (void)io;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
-		read_config(&config, config_size);
-		if(config[0] == 1)
-	    ImGui::StyleColorsDark();
-		else
+	ImGui::CreateContext();
+	ImGuiIO &io = ImGui::GetIO();
+	(void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+	read_config(&config, config_size);
+	if (config[0] == 1)
+		ImGui::StyleColorsDark();
+	else
 		ImGui::StyleColorsLight();
 
-		ImGui::GetStyle().WindowRounding = 5.0f;
-		ImGui::GetStyle().PopupRounding = 5.0f;
-		ImGui::GetStyle().FrameRounding = 5.0f;
-		ImGui::GetStyle().GrabRounding = 5.0f;
-	       // setup platform/renderer bindings
-	    ImGui_ImplSDL2_InitForOpenGL(window, context);
-	    ImGui_ImplOpenGL3_Init("#version 100");
-	    SDL_GL_SetSwapInterval(1);
-		//float dpi_scaling = 1.0f;
-		#ifdef _WIN32
-		float dpi_x, dpi_y, dpi_z;
-		SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
-		float dpi_scaling = dpi_x / 96.0f;
-		//std::cout << dpi_scaling << std::endl;
-		//SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
-		ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
-		io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 36.0f * dpi_scaling);
-		io.FontGlobalScale = 0.5f;
-		#endif
-		bool bt = false;
-		//char* path = NULL;
-		int preset_index = 0;
-		//here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
-		hid_device* handle;
-		int res = find_dev(&handle, &bt);
-		if(res == -1){
-			error_sound();
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","could not find a dualsense controller!",window);
-			exit(EXIT_FAILURE);
-		}
-		//printf("%d\n",bt);
-		//free(path);
-		bool running = true;
-		//SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
-		uint8_t* outReport = new uint8_t[78];
-	    memset(outReport, 0, 78);
-	    if(!bt){
-	   		    outReport[0] = 0x2;
-	   		    outReport[1] = 0x04 | 0x08;
-	   		    outReport[2] = 0x40;
-	   		    }
-	   		    if(bt){
-	   		    outReport[0] = 0x31; //thx ds4windows
-	   		    outReport[1] = 0x2;
-	   		    outReport[2] = 0x04 | 0x08;
-	   			outReport[3] = 0x40;
-	   		    }
-		const char* states[9] = {"Off","Rigid","Pulse","RigidA","RigidB","RigidAB","PulseA","PulseB","PulseAB"};
-		int left_cur = 0;
-		int right_cur = 0;
-	while(running){
+	ImGui::GetStyle().WindowRounding = 5.0f;
+	ImGui::GetStyle().PopupRounding = 5.0f;
+	ImGui::GetStyle().FrameRounding = 5.0f;
+	ImGui::GetStyle().GrabRounding = 5.0f;
+	// setup platform/renderer bindings
+	ImGui_ImplSDL2_InitForOpenGL(window, context);
+	ImGui_ImplOpenGL3_Init("#version 100");
+	SDL_GL_SetSwapInterval(1);
+// float dpi_scaling = 1.0f;
+#ifdef _WIN32
+	float dpi_x, dpi_y, dpi_z;
+	SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
+	float dpi_scaling = dpi_x / 96.0f;
+	// std::cout << dpi_scaling << std::endl;
+	// SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
+	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
+	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 36.0f * dpi_scaling);
+	io.FontGlobalScale = 0.5f;
+#endif
+	bool bt = false;
+	// char* path = NULL;
+	int preset_index = 0;
+	// here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
+	hid_device *handle;
+	int res = find_dev(&handle, &bt);
+	if (res == -1)
+	{
+		error_sound();
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "could not find a dualsense controller!", window);
+		exit(EXIT_FAILURE);
+	}
+	// printf("%d\n",bt);
+	// free(path);
+	bool running = true;
+	// SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
+	uint8_t *outReport = new uint8_t[78];
+	memset(outReport, 0, 78);
+	if (!bt)
+	{
+		outReport[0] = 0x2;
+		outReport[1] = 0x04 | 0x08;
+		outReport[2] = 0x40;
+	}
+	if (bt)
+	{
+		outReport[0] = 0x31; // thx ds4windows
+		outReport[1] = 0x2;
+		outReport[2] = 0x04 | 0x08;
+		outReport[3] = 0x40;
+	}
+	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
+	int left_cur = 0;
+	int right_cur = 0;
+	while (running)
+	{
 
-		 SDL_Event event;
-		    while (SDL_PollEvent(&event))
-		    {
-		    	 ImGui_ImplSDL2_ProcessEvent(&event);
-		    	if (event.type == SDL_QUIT)
-		        {
-		    	   running = false;
-		        }
-		    	if(event.window.event == SDL_WINDOWEVENT_RESIZED){
-		    		SDL_GetWindowSize(window, &width, &height);
-					glViewport(0, 0, width, height);
-		    	}
-		    }
-		const wchar_t* error = hid_error(handle);
-		if(wcscmp(error, L"Success") != 0){
-			#ifdef __linux__
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			if (event.type == SDL_QUIT)
+			{
+				running = false;
+			}
+			if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+			{
+				SDL_GetWindowSize(window, &width, &height);
+				glViewport(0, 0, width, height);
+			}
+		}
+		const wchar_t *error = hid_error(handle);
+		if (wcscmp(error, L"Success") != 0)
+		{
+#ifdef __linux__
 			sleep(1);
-			#endif
-			#ifdef _WIN32
+#endif
+#ifdef _WIN32
 			Sleep(1000);
-			#endif
-			//printf("here!\n");
+#endif
+			// printf("here!\n");
 			hid_close(handle);
 			int res = find_dev(&handle, &bt);
-			if(res == -1){
-			error_sound();
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"ERROR","Controller Disconnected! (or something else happened)",window);
-			exit(EXIT_FAILURE);
+			if (res == -1)
+			{
+				error_sound();
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
+				exit(EXIT_FAILURE);
 			}
 			apply_effect(handle, bt, outReport);
 		}
 
-	    glClearColor(0.f, 0.f, 0.f, 0.f);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    ImGui_ImplOpenGL3_NewFrame();
-	    ImGui_ImplSDL2_NewFrame(window);
-	    ImGui::NewFrame();
-		    ImGui::SetNextWindowSize(
-            ImVec2(float(width), float(height)),
-            ImGuiCond_Always
-            );	
-        ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always, ImVec2(0,0));
-		//ImGui::ShowDemoWindow();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,0.0f);
-	    ImGui::Begin("Controls", NULL,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame(window);
+		ImGui::NewFrame();
+		ImGui::SetNextWindowSize(
+			ImVec2(float(width), float(height)),
+			ImGuiCond_Always);
+		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
+		// ImGui::ShowDemoWindow();
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
-	//	ImGui::ShowDemoWindow();
-	    if(ImGui::Checkbox("Using Bluetooth?",&bt)){
-			if(bt){
-				memmove(&outReport[12], &outReport[11] , 30 -10);
+		//	ImGui::ShowDemoWindow();
+		if (ImGui::Checkbox("Using Bluetooth?", &bt))
+		{
+			if (bt)
+			{
+				memmove(&outReport[12], &outReport[11], 30 - 10);
 			}
-			else{
-				memmove(&outReport[11], &outReport[12] , 30 -10);
+			else
+			{
+				memmove(&outReport[11], &outReport[12], 30 - 10);
 			}
 		}
-		if(ImGui::BeginMenuBar()){
-		if(ImGui::BeginMenu("File")){
-			if(ImGui::MenuItem("Load Preset")){
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Load Preset"))
+				{
 					load_preset_open = true;
 					memset(name, 0, sizeof(name));
-					//name.clear();
-			}
-			if(ImGui::MenuItem("Save Preset")){
+					// name.clear();
+				}
+				if (ImGui::MenuItem("Save Preset"))
+				{
 					save_preset_open = true;
 					memset(name, 0, sizeof(name));
-					//name.clear();
-			}
-			if(ImGui::MenuItem("Delete Preset")){
+					// name.clear();
+				}
+				if (ImGui::MenuItem("Delete Preset"))
+				{
 					delete_preset_open = true;
 					memset(name, 0, sizeof(name));
-					//name.clear();
+					// name.clear();
+				}
+				ImGui::EndMenu();
 			}
-			ImGui::EndMenu();
-		}
-		if(ImGui::BeginMenu("Tools")){
-			if(ImGui::MenuItem("Options")){
-				options_open = true;
+			if (ImGui::BeginMenu("Tools"))
+			{
+				if (ImGui::MenuItem("Options"))
+				{
+					options_open = true;
+				}
+				ImGui::EndMenu();
 			}
-			ImGui::EndMenu();
-		}
-		if(ImGui::BeginMenu("Help")){
-			if(ImGui::MenuItem("About")){
+			if (ImGui::BeginMenu("Help"))
+			{
+				if (ImGui::MenuItem("About"))
+				{
 					popup_open = true;
+				}
+				ImGui::EndMenu();
 			}
-			ImGui::EndMenu();
+			ImGui::EndMenuBar();
 		}
-		ImGui::EndMenuBar();
-		}
-		if(popup_open)
+		if (popup_open)
 		{
 			ImGui::OpenPopup("About");
 		}
-		if(load_preset_open ){
+		if (load_preset_open)
+		{
 			ImGui::OpenPopup("Load Preset");
 		}
-		if(save_preset_open){
+		if (save_preset_open)
+		{
 			ImGui::OpenPopup("Save Preset");
 		}
-		if(delete_preset_open){
+		if (delete_preset_open)
+		{
 			ImGui::OpenPopup("Delete Preset");
 		}
-		if(options_open){
+		if (options_open)
+		{
 			ImGui::OpenPopup("Options");
 		}
 
-		if(ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-					//printf("about2!\n");
-				ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-				_pos.x -= ImGui::GetWindowWidth()/2;
-				_pos.y -= ImGui::GetWindowHeight()/2;
-				ImGui::SetWindowPos(_pos);
-				CenteredText("Trigger Control");
-				CenteredText(VERSION);
-				ImGui::Separator();
-				ImGui::Text("Made with FOSS, Powered by SDL2");
-				ImGui::EndPopup();
-		}
-		if(ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+		if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			// printf("about2!\n");
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth()/2;
-			_pos.y -= ImGui::GetWindowHeight()/2;
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
+			ImGui::SetWindowPos(_pos);
+			CenteredText("Trigger Control");
+			CenteredText(VERSION);
+			ImGui::Separator();
+			ImGui::Text("Made with FOSS, Powered by SDL2");
+			ImGui::EndPopup();
+		}
+		if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
 			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if(ImGui::Button("Load") && options.size() > 0){
+			if (ImGui::Button("Load") && options.size() > 0)
+			{
 				load_preset(outReport, bt, options[preset_index].c_str());
 				right_cur = get_index(outReport[11 + bt]);
-				left_cur = get_index(outReport[22+ bt]);
+				left_cur = get_index(outReport[22 + bt]);
 				apply_effect(handle, bt, outReport);
 				load_preset_open = false;
 			}
@@ -544,25 +603,29 @@ int main(int argc, char **argv) {
 			ImGui::EndPopup();
 		}
 
-		if(preset_exists){
+		if (preset_exists)
+		{
 			ImGui::OpenPopup("Preset Exists");
 		}
 
-		if(ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(300,180),ImGuiCond_Always);
+		if (ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(300, 180), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth()/2;
-			_pos.y -= ImGui::GetWindowHeight()/2;
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
 			ImGui::Text("This Preset already exists! Are You Sure You Want To Overwrite It?");
-			if(ImGui::Button("Yes")){
+			if (ImGui::Button("Yes"))
+			{
 				save_preset(outReport, bt, name);
 				save_preset_open = false;
 				ImGui::CloseCurrentPopup();
 				preset_exists = false;
 			}
 			ImGui::SameLine();
-			if(ImGui::Button("No")){
+			if (ImGui::Button("No"))
+			{
 				ImGui::CloseCurrentPopup();
 				preset_exists = false;
 				save_preset_open = true;
@@ -570,44 +633,53 @@ int main(int argc, char **argv) {
 			ImGui::EndPopup();
 		}
 
-		if(ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+		if (ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth()/2;
-			_pos.y -= ImGui::GetWindowHeight()/2;
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
 			get_presets(options);
-			if(ImGui::InputTextWithHint("Preset Name", "Name",name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0'){
-				auto is_name = [name](std::string a){
-					return strcmp(a.c_str(), name) == 0; 
+			if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0')
+			{
+				auto is_name = [name](std::string a)
+				{
+					return strcmp(a.c_str(), name) == 0;
 				};
-				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
+				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
+				{
 					printf("Preset already exists!\n");
-					//ImGui::CloseCurrentPopup();
+					// ImGui::CloseCurrentPopup();
 					save_preset_open = false;
-					//ImGui::OpenPopup("Preset Exists!");
+					// ImGui::OpenPopup("Preset Exists!");
 					preset_exists = true;
 				}
-				else{
+				else
+				{
 					save_preset(outReport, bt, name);
 					save_preset_open = false;
 				}
 			}
 
-			if(ImGui::Button("Save") && name[0] != '\0'){
-				auto is_name = [name](std::string a){
-					return strcmp(a.c_str(), name) == 0; 
+			if (ImGui::Button("Save") && name[0] != '\0')
+			{
+				auto is_name = [name](std::string a)
+				{
+					return strcmp(a.c_str(), name) == 0;
 				};
-				if(std::find_if(options.begin(), options.end(), is_name) != options.end()){
+				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
+				{
 					printf("Preset already exists!\n");
-					//preset_exists = true;
-					//ImGui::CloseCurrentPopup();
+					// preset_exists = true;
+					// ImGui::CloseCurrentPopup();
 					save_preset_open = false;
-					//ImGui::OpenPopup("Preset Exists!");
+					// ImGui::OpenPopup("Preset Exists!");
 					preset_exists = true;
 				}
-				else{
+				else
+				{
 					save_preset(outReport, bt, name);
 					save_preset_open = false;
 				}
@@ -616,96 +688,103 @@ int main(int argc, char **argv) {
 			ImGui::EndPopup();
 		}
 
-		if(ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(300,80),ImGuiCond_Always);
+		if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth()/2;
-			_pos.y -= ImGui::GetWindowHeight()/2;
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
 			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if(ImGui::Button("Delete!") && options.size() > 0){
-				remove((std::string(CONFIG_PATH)+options[preset_index]+".txt").c_str());
+			if (ImGui::Button("Delete!") && options.size() > 0)
+			{
+				remove((std::string(CONFIG_PATH) + options[preset_index] + ".txt").c_str());
 				delete_preset_open = false;
 			}
 			ImGui::EndPopup();
 		}
 
-		if(ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(500,100),ImGuiCond_Always);
+		if (ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(500, 100), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth()/2;
-			_pos.y -= ImGui::GetWindowHeight()/2;
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
-			//ImGui::Text("It's Empty here :(");
-		
-			if(ImGui::Button("Light Mode", ImVec2(ImGui::GetWindowWidth()/2-10,25))){
+			// ImGui::Text("It's Empty here :(");
+
+			if (ImGui::Button("Light Mode", ImVec2(ImGui::GetWindowWidth() / 2 - 10, 25)))
+			{
 				ImGui::StyleColorsLight();
 				config[0] = 0;
 			}
 			ImGui::SameLine();
-			//fix spacing between edge and button
-			if(ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth()/2-14,25))){
+			// fix spacing between edge and button
+			if (ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth() / 2 - 14, 25)))
+			{
 				ImGui::StyleColorsDark();
 				config[0] = 1;
 			}
-			
-			if(ImGui::Button("Close")){
+
+			if (ImGui::Button("Close"))
+			{
 				options_open = false;
 			}
 
 			ImGui::EndPopup();
 		}
-	    if(ImGui::Button("Reset")){
-		    memset(outReport, 0, 78);
-		    outReport[11 + bt] = (uint8_t)dualsense_modes::Rigid_B;
-		    outReport[22 + bt] = (uint8_t)dualsense_modes::Rigid_B;
+		if (ImGui::Button("Reset"))
+		{
+			memset(outReport, 0, 78);
+			outReport[11 + bt] = (uint8_t)dualsense_modes::Rigid_B;
+			outReport[22 + bt] = (uint8_t)dualsense_modes::Rigid_B;
 			apply_effect(handle, bt, outReport);
 			left_cur = 0;
 			right_cur = 0;
-			//printf("reset!\n");
-		    outReport[11 + bt] = (uint8_t)0;
-		    outReport[22 + bt] = (uint8_t)0;
-	    }
+			// printf("reset!\n");
+			outReport[11 + bt] = (uint8_t)0;
+			outReport[22 + bt] = (uint8_t)0;
+		}
 
-	    ImGui::Text("Right Trigger:");
-	    ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-	    uint8_t min  = 0;
-	    uint8_t max = UINT8_MAX;
-	    outReport[11 + bt] = get_mode(right_cur);
-	    ImGui::SliderScalar("Right Start Resistance", ImGuiDataType_U8, &outReport[12+ bt] ,&min, &max, "%d",0);
-	    ImGui::SliderScalar("Right Effect Force", ImGuiDataType_U8,&outReport[13+ bt] , &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Right Range Force", ImGuiDataType_U8,&outReport[14+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Right Near Release Strength", ImGuiDataType_U8,&outReport[15+ bt],&min, &max, "%d", 0);
-	    ImGui::SliderScalar("Right Near Middle Strength",ImGuiDataType_U8, &outReport[16+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Right Pressed Strength", ImGuiDataType_U8,&outReport[17+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Right Actuation Frequency", ImGuiDataType_U8,&outReport[20+ bt], &min, &max, "%d", 0);
-	    ImGui::Text("Left Trigger:");
-	    ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-	    outReport[22 + bt] = get_mode(left_cur);
-	    ImGui::SliderScalar("Left Start Resistance", ImGuiDataType_U8, &outReport[23+ bt] ,&min, &max, "%d",0);
-	    ImGui::SliderScalar("Left Effect Force", ImGuiDataType_U8,&outReport[24+ bt] , &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Left Range Force", ImGuiDataType_U8,&outReport[25+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Left Near Release Strength", ImGuiDataType_U8,&outReport[26+ bt],&min, &max, "%d", 0);
-	    ImGui::SliderScalar("Left Near Middle Strength",ImGuiDataType_U8, &outReport[27+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Left Pressed Strength", ImGuiDataType_U8,&outReport[28+ bt], &min, &max, "%d", 0);
-	    ImGui::SliderScalar("Left Actuation Frequency", ImGuiDataType_U8,&outReport[30+ bt], &min, &max, "%d", 0);
-	    if(ImGui::Button("Apply")){
-	    	printf("applied! bt: %d\n", bt);
-	    	apply_effect(handle, bt,outReport);
-	    }
+		ImGui::Text("Right Trigger:");
+		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
+		uint8_t min = 0;
+		uint8_t max = UINT8_MAX;
+		outReport[11 + bt] = get_mode(right_cur);
+		ImGui::SliderScalar("Right Start Resistance", ImGuiDataType_U8, &outReport[12 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Effect Force", ImGuiDataType_U8, &outReport[13 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Range Force", ImGuiDataType_U8, &outReport[14 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Near Release Strength", ImGuiDataType_U8, &outReport[15 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Near Middle Strength", ImGuiDataType_U8, &outReport[16 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Pressed Strength", ImGuiDataType_U8, &outReport[17 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Right Actuation Frequency", ImGuiDataType_U8, &outReport[20 + bt], &min, &max, "%d", 0);
+		ImGui::Text("Left Trigger:");
+		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
+		outReport[22 + bt] = get_mode(left_cur);
+		ImGui::SliderScalar("Left Start Resistance", ImGuiDataType_U8, &outReport[23 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Effect Force", ImGuiDataType_U8, &outReport[24 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Range Force", ImGuiDataType_U8, &outReport[25 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Near Release Strength", ImGuiDataType_U8, &outReport[26 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Near Middle Strength", ImGuiDataType_U8, &outReport[27 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Pressed Strength", ImGuiDataType_U8, &outReport[28 + bt], &min, &max, "%d", 0);
+		ImGui::SliderScalar("Left Actuation Frequency", ImGuiDataType_U8, &outReport[30 + bt], &min, &max, "%d", 0);
+		if (ImGui::Button("Apply"))
+		{
+			printf("applied! bt: %d\n", bt);
+			apply_effect(handle, bt, outReport);
+		}
 
-	    ImGui::End();
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui::End();
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		SDL_GL_SwapWindow(window);
-
 	}
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
@@ -720,6 +799,6 @@ int main(int argc, char **argv) {
 	SDL_Quit();
 	remove("imgui.ini");
 	write_config(config, config_size);
-	//program termination should free memory I forgot to free :D
+	// program termination should free memory I forgot to free :D
 	return 0;
 }
