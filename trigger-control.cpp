@@ -408,6 +408,16 @@ int main(int argc, char **argv)
 	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 36.0f * dpi_scaling);
 	io.FontGlobalScale = 0.5f;
 #endif
+#ifdef __linux__
+	//should work for some people, but not all
+	if(std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
+	{
+		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f);
+	}
+	else{
+		printf("could not find font\n");
+	}
+#endif
 	bool bt = false;
 	// char* path = NULL;
 	int preset_index = 0;
@@ -583,7 +593,7 @@ int main(int argc, char **argv)
 		}
 		if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
@@ -635,7 +645,7 @@ int main(int argc, char **argv)
 
 		if (ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(340, 100), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
@@ -690,7 +700,7 @@ int main(int argc, char **argv)
 
 		if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(300, 80), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
