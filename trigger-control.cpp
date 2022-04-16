@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 		ImGui::GetStyle().GrabRounding = 5.0f;
 	       // setup platform/renderer bindings
 	    ImGui_ImplSDL2_InitForOpenGL(window, context);
-	    ImGui_ImplOpenGL3_Init("#version 150");
+	    ImGui_ImplOpenGL3_Init("#version 100");
 	    SDL_GL_SetSwapInterval(1);
 		//float dpi_scaling = 1.0f;
 		#ifdef _WIN32
