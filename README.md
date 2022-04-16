@@ -1,6 +1,4 @@
 # trigger control  
-**DISCLAIMER**  
-dosen't seem to work atm for ubuntu 20.04 and distros based on it. (see https://github.com/Etaash-mathamsetty/trigger-control/issues/5)
 Dark Mode           |  Light Mode
 :-------------------------:|:-------------------------:
 ![image](https://user-images.githubusercontent.com/45927311/163625506-9b2f6ddc-59f1-4fad-be3c-473a107470b4.png) | ![image](https://user-images.githubusercontent.com/45927311/163625718-faf8340d-724d-4567-8303-918126a7d58c.png)
