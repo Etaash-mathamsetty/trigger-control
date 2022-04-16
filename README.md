@@ -4,10 +4,8 @@ Dark Mode           |  Light Mode
 ![image](https://user-images.githubusercontent.com/45927311/163625506-9b2f6ddc-59f1-4fad-be3c-473a107470b4.png) | ![image](https://user-images.githubusercontent.com/45927311/163625718-faf8340d-724d-4567-8303-918126a7d58c.png)
 
 
-a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui  
-~~currently only works through usb though the controller is detected through bluetooth~~  
-
-now works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)  
+a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui,  
+works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)  
 
 libraries:  
 libSDL2  
