@@ -405,8 +405,15 @@ int main(int argc, char **argv)
 	// std::cout << dpi_scaling << std::endl;
 	// SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
-	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 36.0f * dpi_scaling);
+	std::string windir = getenv("WINDIR");
+	if(std::filesystem::exists(windir  + "\\Fonts\\segoeui.ttf")){
+	io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling);
 	io.FontGlobalScale = 0.5f;
+	}
+	else{
+		printf(getenv("WINDIR"));
+		putchar('\n');
+	}
 #endif
 #ifdef __linux__
 	//should work for some people, but not all
@@ -514,6 +521,8 @@ int main(int argc, char **argv)
 			{
 				memmove(&outReport[11], &outReport[12], 30 - 10);
 			}
+			right_cur = get_index(outReport[11+bt]);
+			left_cur = get_index(outReport[22+bt]);
 		}
 		if (ImGui::BeginMenuBar())
 		{
@@ -625,7 +634,7 @@ int main(int argc, char **argv)
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
-			ImGui::Text("This Preset already exists! Are You Sure You Want To Overwrite It?");
+			ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
 			if (ImGui::Button("Yes"))
 			{
 				save_preset(outReport, bt, name);
@@ -782,7 +791,7 @@ int main(int argc, char **argv)
 		ImGui::SliderScalar("Left Actuation Frequency", ImGuiDataType_U8, &outReport[30 + bt], &min, &max, "%d", 0);
 		if (ImGui::Button("Apply"))
 		{
-			printf("applied! bt: %d\n", bt);
+			//printf("applied! bt: %d\n", bt);
 			apply_effect(handle, bt, outReport);
 		}
 
@@ -807,7 +816,8 @@ int main(int argc, char **argv)
 	hid_exit();
 	delete outReport;
 	SDL_Quit();
-	remove("imgui.ini");
+	if(std::filesystem::exists("imgui.ini"))
+		remove("imgui.ini");
 	write_config(config, config_size);
 	// program termination should free memory I forgot to free :D
 	return 0;
