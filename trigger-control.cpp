@@ -421,6 +421,9 @@ int main(int argc, char **argv)
 	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f);
 	}
+	else if(std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")){
+		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f);
+	}
 	else{
 		printf("could not find font\n");
 	}
