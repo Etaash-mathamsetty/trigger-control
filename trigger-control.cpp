@@ -417,10 +417,12 @@ int main(int argc, char **argv)
 #endif
 #ifdef __linux__
 	//should work for some people, but not all
+	//probably arch based distros
 	if(std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f);
 	}
+	//probably ubuntu based
 	else if(std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")){
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f);
 	}
