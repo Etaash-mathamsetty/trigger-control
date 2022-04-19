@@ -347,6 +347,10 @@ int main(int argc, char **argv)
 #endif
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
+	#ifdef __linux__
+	//not implemented yet in sdl2 2.0.20
+	//SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+	#endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
@@ -409,10 +413,6 @@ int main(int argc, char **argv)
 	if(std::filesystem::exists(windir  + "\\Fonts\\segoeui.ttf")){
 	io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling);
 	io.FontGlobalScale = 0.5f;
-	}
-	else{
-		printf(getenv("WINDIR"));
-		putchar('\n');
 	}
 #endif
 #ifdef __linux__
