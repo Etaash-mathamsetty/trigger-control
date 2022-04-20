@@ -722,6 +722,7 @@ int main(int argc, char **argv)
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
 			get_presets(options);
+			ImGui::Text("You cannot undo this action!");
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if (ImGui::Button("Delete!") && options.size() > 0)
 			{
