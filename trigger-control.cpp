@@ -604,6 +604,11 @@ int main(int argc, char **argv)
 			CenteredText(VERSION);
 			ImGui::Separator();
 			ImGui::Text("Made with FOSS, Powered by SDL2");
+			if(ImGui::Button("OK", ImVec2(272,25)))
+			{
+				popup_open = false;
+				ImGui::CloseCurrentPopup();
+			}
 			ImGui::EndPopup();
 		}
 		if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
@@ -773,6 +778,7 @@ int main(int argc, char **argv)
 			outReport[11 + bt] = (uint8_t)0;
 			outReport[22 + bt] = (uint8_t)0;
 		}
+
 
 		ImGui::Text("Right Trigger:");
 		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
