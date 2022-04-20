@@ -715,7 +715,7 @@ int main(int argc, char **argv)
 
 		if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
