@@ -482,6 +482,7 @@ int main(int argc, char **argv)
 			}
 		}
 		const wchar_t *error = hid_error(handle);
+		if(error != nullptr)
 		if (wcscmp(error, L"Success") != 0)
 		{
 #ifdef __linux__
