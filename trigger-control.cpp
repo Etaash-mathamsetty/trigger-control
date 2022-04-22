@@ -629,6 +629,12 @@ int main(int argc, char **argv)
 				apply_effect(handle, bt, outReport);
 				load_preset_open = false;
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+				load_preset_open = false;
+				ImGui::CloseCurrentPopup();
+			}
 
 			ImGui::EndPopup();
 		}
@@ -660,6 +666,7 @@ int main(int argc, char **argv)
 				preset_exists = false;
 				save_preset_open = true;
 			}
+
 			ImGui::EndPopup();
 		}
 
@@ -714,7 +721,10 @@ int main(int argc, char **argv)
 					save_preset_open = false;
 				}
 			}
-
+			ImGui::SameLine();
+			if(ImGui::Button("Cancel")){
+				save_preset_open = false;
+			}
 			ImGui::EndPopup();
 		}
 
@@ -732,6 +742,11 @@ int main(int argc, char **argv)
 			if (ImGui::Button("Delete!") && options.size() > 0)
 			{
 				remove((std::string(CONFIG_PATH) + options[preset_index] + ".txt").c_str());
+				delete_preset_open = false;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
 				delete_preset_open = false;
 			}
 			ImGui::EndPopup();
