@@ -38,7 +38,7 @@ const char *VERSION = "Version 1.3.2";
 char *CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
-enum dualsense_modes
+enum class dualsense_modes
 {
 	Off = 0x0,	 // no resistance
 	Rigid = 0x1, // continous resistance
@@ -208,7 +208,7 @@ int find_dev(hid_device **handle, bool *bt)
 	return 0;
 }
 
-int get_mode(int index)
+dualsense_modes get_mode(int index)
 {
 	switch (index)
 	{
@@ -233,7 +233,7 @@ int get_mode(int index)
 	default:
 		break;
 	}
-	return 0;
+	return dualsense_modes::Off;
 }
 
 int get_index(dualsense_modes mode)
@@ -799,7 +799,7 @@ int main(int argc, char **argv)
 		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 		uint8_t min = 0;
 		uint8_t max = UINT8_MAX;
-		outReport[11 + bt] = get_mode(right_cur);
+		outReport[11 + bt] = static_cast<uint8_t>(get_mode(right_cur));
 		ImGui::SliderScalar("Right Start Resistance", ImGuiDataType_U8, &outReport[12 + bt], &min, &max, "%d", 0);
 		ImGui::SliderScalar("Right Effect Force", ImGuiDataType_U8, &outReport[13 + bt], &min, &max, "%d", 0);
 		ImGui::SliderScalar("Right Range Force", ImGuiDataType_U8, &outReport[14 + bt], &min, &max, "%d", 0);
@@ -809,7 +809,7 @@ int main(int argc, char **argv)
 		ImGui::SliderScalar("Right Actuation Frequency", ImGuiDataType_U8, &outReport[20 + bt], &min, &max, "%d", 0);
 		ImGui::Text("Left Trigger:");
 		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-		outReport[22 + bt] = get_mode(left_cur);
+		outReport[22 + bt] = static_cast<uint8_t>(get_mode(left_cur));
 		ImGui::SliderScalar("Left Start Resistance", ImGuiDataType_U8, &outReport[23 + bt], &min, &max, "%d", 0);
 		ImGui::SliderScalar("Left Effect Force", ImGuiDataType_U8, &outReport[24 + bt], &min, &max, "%d", 0);
 		ImGui::SliderScalar("Left Range Force", ImGuiDataType_U8, &outReport[25 + bt], &min, &max, "%d", 0);
