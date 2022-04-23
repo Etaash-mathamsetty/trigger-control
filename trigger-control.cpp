@@ -800,23 +800,24 @@ int main(int argc, char **argv)
 		uint8_t min = 0;
 		uint8_t max = UINT8_MAX;
 		outReport[11 + bt] = static_cast<uint8_t>(get_mode(right_cur));
-		ImGui::SliderScalar("Right Start Resistance", ImGuiDataType_U8, &outReport[12 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Effect Force", ImGuiDataType_U8, &outReport[13 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Range Force", ImGuiDataType_U8, &outReport[14 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Near Release Strength", ImGuiDataType_U8, &outReport[15 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Near Middle Strength", ImGuiDataType_U8, &outReport[16 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Pressed Strength", ImGuiDataType_U8, &outReport[17 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Right Actuation Frequency", ImGuiDataType_U8, &outReport[20 + bt], &min, &max, "%d", 0);
+		#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
+		SLIDER("Right Start Intensity", &outReport[12 + bt]);
+		SLIDER("Right Effect Force", &outReport[13 + bt]);
+		SLIDER("Right Range Force", &outReport[14 + bt]);
+		SLIDER("Right Near Release Strength", &outReport[15 + bt]);
+		SLIDER("Right Near Middle Strength", &outReport[16 + bt]);
+		SLIDER("Right Pressed Strength", &outReport[17 + bt]);
+		SLIDER("Right Actuation Frequency", &outReport[20 + bt]);
 		ImGui::Text("Left Trigger:");
 		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
 		outReport[22 + bt] = static_cast<uint8_t>(get_mode(left_cur));
-		ImGui::SliderScalar("Left Start Resistance", ImGuiDataType_U8, &outReport[23 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Effect Force", ImGuiDataType_U8, &outReport[24 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Range Force", ImGuiDataType_U8, &outReport[25 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Near Release Strength", ImGuiDataType_U8, &outReport[26 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Near Middle Strength", ImGuiDataType_U8, &outReport[27 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Pressed Strength", ImGuiDataType_U8, &outReport[28 + bt], &min, &max, "%d", 0);
-		ImGui::SliderScalar("Left Actuation Frequency", ImGuiDataType_U8, &outReport[30 + bt], &min, &max, "%d", 0);
+		SLIDER("Left Start Resistance", &outReport[23 + bt]);
+		SLIDER("Left Effect Force", &outReport[24 + bt]);
+		SLIDER("Left Range Force", &outReport[25 + bt]);
+		SLIDER("Left Near Release Strength",&outReport[26 + bt]);
+		SLIDER("Left Near Middle Strength", &outReport[27 + bt]);
+		SLIDER("Left Pressed Strength", &outReport[28 + bt]);
+		SLIDER("Left Actuation Frequency", &outReport[30 + bt]);
 		if (ImGui::Button("Apply"))
 		{
 			//printf("applied! bt: %d\n", bt);
