@@ -236,7 +236,7 @@ int get_mode(int index)
 	return 0;
 }
 
-int get_index(int mode)
+int get_index(dualsense_modes mode)
 {
 	switch (mode)
 	{
@@ -527,8 +527,8 @@ int main(int argc, char **argv)
 			{
 				memmove(&outReport[11], &outReport[12], 30 - 10);
 			}
-			right_cur = get_index(outReport[11+bt]);
-			left_cur = get_index(outReport[22+bt]);
+			right_cur = get_index(static_cast<dualsense_modes>(outReport[11+bt]));
+			left_cur = get_index(static_cast<dualsense_modes>(outReport[22+bt]));
 		}
 		if (ImGui::BeginMenuBar())
 		{
@@ -624,8 +624,8 @@ int main(int argc, char **argv)
 			if (ImGui::Button("Load") && options.size() > 0)
 			{
 				load_preset(outReport, bt, options[preset_index].c_str());
-				right_cur = get_index(outReport[11 + bt]);
-				left_cur = get_index(outReport[22 + bt]);
+				right_cur = get_index(static_cast<dualsense_modes>(outReport[11 + bt]));
+				left_cur = get_index(static_cast<dualsense_modes>(outReport[22 + bt]));
 				apply_effect(handle, bt, outReport);
 				load_preset_open = false;
 			}
