@@ -347,10 +347,10 @@ int main(int argc, char **argv)
 #endif
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
-	#ifdef __linux__
-	//not implemented yet in sdl2 2.0.20
-	//SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
-	#endif
+#ifdef __linux__
+// not implemented yet in sdl2 2.0.20
+// SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+#endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
@@ -410,23 +410,26 @@ int main(int argc, char **argv)
 	// SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	std::string windir = getenv("WINDIR");
-	if(std::filesystem::exists(windir  + "\\Fonts\\segoeui.ttf")){
-	io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling);
-	io.FontGlobalScale = 0.5f;
+	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
+	{
+		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling);
+		io.FontGlobalScale = 0.5f;
 	}
 #endif
 #ifdef __linux__
-	//should work for some people, but not all
-	//probably arch based distros
-	if(std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
+	// should work for some people, but not all
+	// probably arch based distros
+	if (std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f);
 	}
-	//probably ubuntu based
-	else if(std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")){
+	// probably ubuntu based
+	else if (std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"))
+	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f);
 	}
-	else{
+	else
+	{
 		printf("could not find font\n");
 	}
 #endif
@@ -482,26 +485,26 @@ int main(int argc, char **argv)
 			}
 		}
 		const wchar_t *error = hid_error(handle);
-		if(error != nullptr)
-		if (wcscmp(error, L"Success") != 0)
-		{
+		if (error != nullptr)
+			if (wcscmp(error, L"Success") != 0)
+			{
 #ifdef __linux__
-			sleep(1);
+				sleep(1);
 #endif
 #ifdef _WIN32
-			Sleep(1000);
+				Sleep(1000);
 #endif
-			// printf("here!\n");
-			hid_close(handle);
-			int res = find_dev(&handle, &bt);
-			if (res == -1)
-			{
-				error_sound();
-				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
-				exit(EXIT_FAILURE);
+				// printf("here!\n");
+				hid_close(handle);
+				int res = find_dev(&handle, &bt);
+				if (res == -1)
+				{
+					error_sound();
+					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
+					exit(EXIT_FAILURE);
+				}
+				apply_effect(handle, bt, outReport);
 			}
-			apply_effect(handle, bt, outReport);
-		}
 
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -527,8 +530,8 @@ int main(int argc, char **argv)
 			{
 				memmove(&outReport[11], &outReport[12], 30 - 10);
 			}
-			right_cur = get_index(static_cast<dualsense_modes>(outReport[11+bt]));
-			left_cur = get_index(static_cast<dualsense_modes>(outReport[22+bt]));
+			right_cur = get_index(static_cast<dualsense_modes>(outReport[11 + bt]));
+			left_cur = get_index(static_cast<dualsense_modes>(outReport[22 + bt]));
 		}
 		if (ImGui::BeginMenuBar())
 		{
@@ -604,7 +607,7 @@ int main(int argc, char **argv)
 			CenteredText(VERSION);
 			ImGui::Separator();
 			ImGui::Text("Made with FOSS, Powered by SDL2");
-			if(ImGui::Button("OK", ImVec2(272,25)))
+			if (ImGui::Button("OK", ImVec2(272, 25)))
 			{
 				popup_open = false;
 				ImGui::CloseCurrentPopup();
@@ -722,7 +725,8 @@ int main(int argc, char **argv)
 				}
 			}
 			ImGui::SameLine();
-			if(ImGui::Button("Cancel")){
+			if (ImGui::Button("Cancel"))
+			{
 				save_preset_open = false;
 			}
 			ImGui::EndPopup();
@@ -794,13 +798,12 @@ int main(int argc, char **argv)
 			outReport[22 + bt] = (uint8_t)0;
 		}
 
-
 		ImGui::Text("Right Trigger:");
 		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 		uint8_t min = 0;
 		uint8_t max = UINT8_MAX;
 		outReport[11 + bt] = static_cast<uint8_t>(get_mode(right_cur));
-		#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
+#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
 		SLIDER("Right Start Intensity", &outReport[12 + bt]);
 		SLIDER("Right Effect Force", &outReport[13 + bt]);
 		SLIDER("Right Range Force", &outReport[14 + bt]);
@@ -814,13 +817,13 @@ int main(int argc, char **argv)
 		SLIDER("Left Start Resistance", &outReport[23 + bt]);
 		SLIDER("Left Effect Force", &outReport[24 + bt]);
 		SLIDER("Left Range Force", &outReport[25 + bt]);
-		SLIDER("Left Near Release Strength",&outReport[26 + bt]);
+		SLIDER("Left Near Release Strength", &outReport[26 + bt]);
 		SLIDER("Left Near Middle Strength", &outReport[27 + bt]);
 		SLIDER("Left Pressed Strength", &outReport[28 + bt]);
 		SLIDER("Left Actuation Frequency", &outReport[30 + bt]);
 		if (ImGui::Button("Apply"))
 		{
-			//printf("applied! bt: %d\n", bt);
+			// printf("applied! bt: %d\n", bt);
 			apply_effect(handle, bt, outReport);
 		}
 
@@ -845,7 +848,7 @@ int main(int argc, char **argv)
 	hid_exit();
 	delete outReport;
 	SDL_Quit();
-	if(std::filesystem::exists("imgui.ini"))
+	if (std::filesystem::exists("imgui.ini"))
 		remove("imgui.ini");
 	write_config(config, config_size);
 	// program termination should free memory I forgot to free :D
