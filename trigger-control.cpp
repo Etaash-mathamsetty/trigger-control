@@ -34,7 +34,7 @@
 #include <locale>
 #include <codecvt>
 
-const char *VERSION = "Version 1.3.2";
+const char *VERSION = "Version 1.4";
 char *CONFIG_PATH = new char[PATH_MAX];
 
 const uint8_t seed = 0xA2;
@@ -51,22 +51,24 @@ enum class dualsense_modes
 	Pulse_AB = 0x2 | 0x20 | 0x04,
 };
 
-void load_preset(uint8_t *outReport, bool bt, const char *name)
+void create_config_path_dir()
 {
-	struct stat info;
-	stat(CONFIG_PATH, &info);
-	if (info.st_mode & S_IFDIR)
-	{
-	}
-	else
-	{
 #ifdef __linux__
+	if (!std::filesystem::is_directory(CONFIG_PATH))
 		mkdir(CONFIG_PATH, 0777);
 #endif
 #ifdef _WIN32
+	// lmao windows with the wide char paths
+	std::wstring wc(strlen(CONFIG_PATH), L'#');
+	mbstowcs(&wc[0], CONFIG_PATH, strlen(CONFIG_PATH));
+	if (!std::filesystem::is_directory(wc))
 		mkdir(CONFIG_PATH);
 #endif
-	}
+}
+
+void load_preset(uint8_t *outReport, bool bt, const char *name)
+{
+	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH);
 	path += name;
 	path += ".txt";
@@ -82,20 +84,7 @@ void load_preset(uint8_t *outReport, bool bt, const char *name)
 
 void save_preset(const uint8_t *outReport, bool bt, const char *name)
 {
-	struct stat info;
-	stat(CONFIG_PATH, &info);
-	if (info.st_mode & S_IFDIR)
-	{
-	}
-	else
-	{
-#ifdef __linux__
-		mkdir(CONFIG_PATH, 0777);
-#endif
-#ifdef _WIN32
-		mkdir(CONFIG_PATH);
-#endif
-	}
+	create_config_path_dir();
 	// printf("stub!\n");
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
 	// open(path.c_str(), O_RDWR | O_CREAT, 0777);
@@ -109,20 +98,7 @@ void save_preset(const uint8_t *outReport, bool bt, const char *name)
 
 void write_config(char *value, size_t size)
 {
-	struct stat info;
-	stat(CONFIG_PATH, &info);
-	if (info.st_mode & S_IFDIR)
-	{
-	}
-	else
-	{
-#ifdef __linux__
-		mkdir(CONFIG_PATH, 0777);
-#endif
-#ifdef _WIN32
-		mkdir(CONFIG_PATH);
-#endif
-	}
+	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH) + "config.ini";
 	FILE *f = fopen(path.c_str(), "wb");
 	if (!f)
@@ -134,20 +110,7 @@ void write_config(char *value, size_t size)
 
 void read_config(char **value, size_t size)
 {
-	struct stat info;
-	stat(CONFIG_PATH, &info);
-	if (info.st_mode & S_IFDIR)
-	{
-	}
-	else
-	{
-#ifdef __linux__
-		mkdir(CONFIG_PATH, 0777);
-#endif
-#ifdef _WIN32
-		mkdir(CONFIG_PATH);
-#endif
-	}
+	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH) + "config.ini";
 	FILE *f = fopen(path.c_str(), "rb");
 	if (!f)
