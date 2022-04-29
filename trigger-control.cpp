@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hidapi/hidapi.h>
+//#include <hidapi/hidapi.h>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <assert.h>
@@ -33,6 +33,8 @@
 #include <filesystem>
 #include <locale>
 #include <codecvt>
+#include <chrono>
+#include <thread>
 
 const char *VERSION = "Version 1.4";
 char *CONFIG_PATH = new char[PATH_MAX];
@@ -66,7 +68,7 @@ void create_config_path_dir()
 #endif
 }
 
-void load_preset(uint8_t *outReport, bool bt, const char *name)
+void load_preset(uint8_t *outReport, const char *name)
 {
 	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH);
@@ -76,13 +78,13 @@ void load_preset(uint8_t *outReport, bool bt, const char *name)
 	FILE *f = fopen(path.c_str(), "rb");
 	if (f)
 	{
-		fread(outReport + 11 + bt, sizeof(*outReport), 30 - 10, f);
+		fread(outReport + 11, sizeof(*outReport), 30 - 10, f);
 		fclose(f);
 	}
 	// printf("stub!\n");
 }
 
-void save_preset(const uint8_t *outReport, bool bt, const char *name)
+void save_preset(const uint8_t *outReport, const char *name)
 {
 	create_config_path_dir();
 	// printf("stub!\n");
@@ -92,7 +94,7 @@ void save_preset(const uint8_t *outReport, bool bt, const char *name)
 	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
-	fwrite(outReport + 11 + bt, sizeof(*outReport), 30 - 10, f);
+	fwrite(outReport + 11, sizeof(*outReport), 30 - 10, f);
 	fclose(f);
 }
 
@@ -141,34 +143,31 @@ void error_sound()
 }
 
 // I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
-int find_dev(hid_device **handle, bool *bt)
+int find_dev(SDL_GameController **handle)
 {
-	struct hid_device_info *dev, *cur_dev;
-	dev = hid_enumerate(0x054c, 0x0ce6);
-	cur_dev = dev;
-	while (cur_dev)
-	{
-		if (cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
-		{
-			break;
-			// printf("found 1\n");
-		}
-		cur_dev = cur_dev->next;
-	}
-	if (cur_dev && cur_dev->vendor_id == 0x054c && cur_dev->product_id == 0x0ce6)
-		*handle = hid_open_path(cur_dev->path);
-	else
-	{
+	if (SDL_NumJoysticks() < 1)
 		return -1;
-	}
-	// wprintf(hid_error(*handle));
-	// putchar('\n');
-	// printf("interface %d\n", dev->interface_number);
-	*bt = (dev->interface_number == -1);
-	hid_free_enumeration(dev);
 
+	for (int i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		if (SDL_IsGameController(i))
+		{
+			*handle = SDL_GameControllerOpen(i);
+			if (*handle)
+			{
+				if (SDL_GameControllerGetType(*handle) == SDL_CONTROLLER_TYPE_PS5)
+				{
+					return 0;
+				}
+			}
+			else
+			{
+				SDL_GameControllerClose(*handle);
+			}
+		}
+	}
 	// printf("%ls\n", hid_error(*handle));
-	return 0;
+	return -1;
 }
 
 dualsense_modes get_mode(int index)
@@ -235,32 +234,14 @@ bool VectorOfStringGetter(void *data, int n, const char **out_text)
 	return true;
 }
 
-void apply_effect(hid_device *dev, bool bt, uint8_t *outReport)
+void apply_effect(SDL_GameController *dev, uint8_t *outReport)
 {
 	if (!dev)
 		return;
-	if (!bt)
-	{
-		outReport[0] = 0x2;
-		outReport[1] = 0x04 | 0x08;
-		outReport[2] = 0x40;
-		hid_write(dev, outReport, 65);
-	}
-	else
-	{
-		outReport[0] = 0x31; // thx ds4windows
-		outReport[1] = 0x2;
-		outReport[2] = 0x04 | 0x08;
-		outReport[3] = 0x40;
-		unsigned int crc = crc32_le(UINT32_MAX, &seed, 1);
-		crc = ~crc32_le(crc, outReport, 74);
-		// printf("crc: %u\n", crc);
-		outReport[74] = (uint8_t)crc;
-		outReport[75] = (uint8_t)(crc >> 8);
-		outReport[76] = (uint8_t)(crc >> 16);
-		outReport[77] = (uint8_t)(crc >> 24);
-		hid_write(dev, outReport, 78);
-	}
+	outReport[0] = 0x2;
+	outReport[1] = 0x04 | 0x08;
+	outReport[2] = 0x40;
+	SDL_GameControllerSendEffect(dev, outReport + 1, 65);
 }
 
 void get_presets(std::vector<std::string> &options)
@@ -304,7 +285,7 @@ int main(int argc, char **argv)
 	strcat(CONFIG_PATH, "\\trigger-control\\");
 // printf(CONFIG_PATH);
 #endif
-	hid_init();
+	// hid_init();
 #ifdef _WIN32
 // ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
 #endif
@@ -314,11 +295,12 @@ int main(int argc, char **argv)
 #if SDL_VERSION_ATLEAST(2, 0, 22)
 	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	printf("running in wayland!\n");
 #endif
 
 #endif
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 300, 250);
@@ -400,16 +382,17 @@ int main(int argc, char **argv)
 		printf("could not find font\n");
 	}
 #endif
-	bool bt = false;
-	// char* path = NULL;
+	// bool bt = false;
+	//  char* path = NULL;
 	int preset_index = 0;
 	// here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
-	hid_device *handle;
-	int res = find_dev(&handle, &bt);
+	SDL_GameController *handle;
+	int res = find_dev(&handle);
 	if (res == -1)
 	{
 		error_sound();
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "could not find a dualsense controller!", window);
+		std::cout << "error: " << SDL_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	// printf("%d\n",bt);
@@ -418,19 +401,9 @@ int main(int argc, char **argv)
 	// SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
 	uint8_t *outReport = new uint8_t[78];
 	memset(outReport, 0, 78);
-	if (!bt)
-	{
-		outReport[0] = 0x2;
-		outReport[1] = 0x04 | 0x08;
-		outReport[2] = 0x40;
-	}
-	if (bt)
-	{
-		outReport[0] = 0x31; // thx ds4windows
-		outReport[1] = 0x2;
-		outReport[2] = 0x04 | 0x08;
-		outReport[3] = 0x40;
-	}
+	outReport[0] = 0x2;
+	outReport[1] = 0x04 | 0x08;
+	outReport[2] = 0x40;
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
@@ -451,27 +424,38 @@ int main(int argc, char **argv)
 				glViewport(0, 0, width, height);
 			}
 		}
-		const wchar_t *error = hid_error(handle);
-		if (error != nullptr)
-			if (wcscmp(error, L"Success") != 0)
-			{
+		// const wchar_t *error = hid_error(handle);
+		if (SDL_GameControllerGetAttached(handle) == SDL_FALSE)
+		{
 #ifdef __linux__
-				sleep(1);
+			sleep(1);
 #endif
 #ifdef _WIN32
-				Sleep(1000);
+			Sleep(1000);
 #endif
-				// printf("here!\n");
-				hid_close(handle);
-				int res = find_dev(&handle, &bt);
-				if (res == -1)
-				{
-					error_sound();
-					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
-					exit(EXIT_FAILURE);
-				}
-				apply_effect(handle, bt, outReport);
+#define APPLY()                                                  \
+	uint8_t *_outReport = new uint8_t[78];                       \
+	memset(_outReport, 0, 78);                                   \
+	_outReport[11] = (uint8_t)dualsense_modes::Rigid_B;          \
+	_outReport[22] = (uint8_t)dualsense_modes::Rigid_B;          \
+	apply_effect(handle, _outReport);                            \
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); \
+	delete _outReport;                                           \
+	outReport[11] = (uint8_t)get_mode(right_cur);                \
+	outReport[22] = (uint8_t)get_mode(left_cur);                 \
+	apply_effect(handle, outReport)
+
+			SDL_GameControllerClose(handle);
+			int res = find_dev(&handle);
+			if (res == -1)
+			{
+				error_sound();
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
+				std::wcout << "error: " << SDL_GetError() << std::endl;
+				exit(EXIT_FAILURE);
 			}
+			apply_effect(handle, outReport);
+		}
 
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -487,19 +471,6 @@ int main(int argc, char **argv)
 		ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
 		//	ImGui::ShowDemoWindow();
-		if (ImGui::Checkbox("Using Bluetooth?", &bt))
-		{
-			if (bt)
-			{
-				memmove(&outReport[12], &outReport[11], 30 - 10);
-			}
-			else
-			{
-				memmove(&outReport[11], &outReport[12], 30 - 10);
-			}
-			right_cur = get_index(static_cast<dualsense_modes>(outReport[11 + bt]));
-			left_cur = get_index(static_cast<dualsense_modes>(outReport[22 + bt]));
-		}
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -593,10 +564,10 @@ int main(int argc, char **argv)
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if (ImGui::Button("Load") && options.size() > 0)
 			{
-				load_preset(outReport, bt, options[preset_index].c_str());
-				right_cur = get_index(static_cast<dualsense_modes>(outReport[11 + bt]));
-				left_cur = get_index(static_cast<dualsense_modes>(outReport[22 + bt]));
-				apply_effect(handle, bt, outReport);
+				load_preset(outReport, options[preset_index].c_str());
+				right_cur = get_index(static_cast<dualsense_modes>(outReport[11]));
+				left_cur = get_index(static_cast<dualsense_modes>(outReport[22]));
+				APPLY();
 				load_preset_open = false;
 			}
 			ImGui::SameLine();
@@ -624,7 +595,7 @@ int main(int argc, char **argv)
 			ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
 			if (ImGui::Button("Yes"))
 			{
-				save_preset(outReport, bt, name);
+				save_preset(outReport, name);
 				save_preset_open = false;
 				ImGui::CloseCurrentPopup();
 				preset_exists = false;
@@ -665,7 +636,7 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					save_preset(outReport, bt, name);
+					save_preset(outReport, name);
 					save_preset_open = false;
 				}
 			}
@@ -687,7 +658,7 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					save_preset(outReport, bt, name);
+					save_preset(outReport, name);
 					save_preset_open = false;
 				}
 			}
@@ -755,43 +726,43 @@ int main(int argc, char **argv)
 		if (ImGui::Button("Reset"))
 		{
 			memset(outReport, 0, 78);
-			outReport[11 + bt] = (uint8_t)dualsense_modes::Rigid_B;
-			outReport[22 + bt] = (uint8_t)dualsense_modes::Rigid_B;
-			apply_effect(handle, bt, outReport);
+			outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+			outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+			apply_effect(handle, outReport);
 			left_cur = 0;
 			right_cur = 0;
 			// printf("reset!\n");
-			outReport[11 + bt] = (uint8_t)0;
-			outReport[22 + bt] = (uint8_t)0;
+			outReport[11] = (uint8_t)0;
+			outReport[22] = (uint8_t)0;
 		}
 
 		ImGui::Text("Right Trigger:");
 		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
 		uint8_t min = 0;
 		uint8_t max = UINT8_MAX;
-		outReport[11 + bt] = static_cast<uint8_t>(get_mode(right_cur));
+		outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
 #define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
-		SLIDER("Right Start Intensity", &outReport[12 + bt]);
-		SLIDER("Right Effect Force", &outReport[13 + bt]);
-		SLIDER("Right Range Force", &outReport[14 + bt]);
-		SLIDER("Right Near Release Strength", &outReport[15 + bt]);
-		SLIDER("Right Near Middle Strength", &outReport[16 + bt]);
-		SLIDER("Right Pressed Strength", &outReport[17 + bt]);
-		SLIDER("Right Actuation Frequency", &outReport[20 + bt]);
+		SLIDER("Right Start Intensity", &outReport[12]);
+		SLIDER("Right Effect Force", &outReport[13]);
+		SLIDER("Right Range Force", &outReport[14]);
+		SLIDER("Right Near Release Strength", &outReport[15]);
+		SLIDER("Right Near Middle Strength", &outReport[16]);
+		SLIDER("Right Pressed Strength", &outReport[17]);
+		SLIDER("Right Actuation Frequency", &outReport[20]);
 		ImGui::Text("Left Trigger:");
 		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-		outReport[22 + bt] = static_cast<uint8_t>(get_mode(left_cur));
-		SLIDER("Left Start Resistance", &outReport[23 + bt]);
-		SLIDER("Left Effect Force", &outReport[24 + bt]);
-		SLIDER("Left Range Force", &outReport[25 + bt]);
-		SLIDER("Left Near Release Strength", &outReport[26 + bt]);
-		SLIDER("Left Near Middle Strength", &outReport[27 + bt]);
-		SLIDER("Left Pressed Strength", &outReport[28 + bt]);
-		SLIDER("Left Actuation Frequency", &outReport[30 + bt]);
+		outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
+		SLIDER("Left Start Resistance", &outReport[23]);
+		SLIDER("Left Effect Force", &outReport[24]);
+		SLIDER("Left Range Force", &outReport[25]);
+		SLIDER("Left Near Release Strength", &outReport[26]);
+		SLIDER("Left Near Middle Strength", &outReport[27]);
+		SLIDER("Left Pressed Strength", &outReport[28]);
+		SLIDER("Left Actuation Frequency", &outReport[30]);
 		if (ImGui::Button("Apply"))
 		{
 			// printf("applied! bt: %d\n", bt);
-			apply_effect(handle, bt, outReport);
+			APPLY();
 		}
 
 		ImGui::End();
@@ -811,8 +782,9 @@ int main(int argc, char **argv)
 	Mix_CloseAudio();
 	Mix_Quit();
 #endif
-	hid_close(handle);
-	hid_exit();
+	// hid_close(handle);
+	// hid_exit();
+	SDL_GameControllerClose(handle);
 	delete outReport;
 	SDL_Quit();
 	if (std::filesystem::exists("imgui.ini"))
