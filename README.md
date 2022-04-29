@@ -22,7 +22,7 @@ SDL2 >= 2.0.22
 libdecor  
 
 **installing them on arch linux (or any arch based distro):**  
-`sudo pacman -S sdl2 hidapi glew libgl base-devel glib2`  
+`sudo pacman -S sdl2 hidapi glew libgl base-devel glib2 libdecor`  
 
 **How to compile**  
 
