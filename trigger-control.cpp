@@ -311,8 +311,12 @@ int main(int argc, char **argv)
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
 #ifdef __linux__
-// not implemented yet in sdl2 2.0.20
-// SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+#if SDL_VERSION_ATLEAST(2, 0, 22)
+	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
+	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+	printf("running in wayland!\n");
+#endif
+
 #endif
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
