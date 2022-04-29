@@ -454,7 +454,7 @@ int main(int argc, char **argv)
 				std::wcout << "error: " << SDL_GetError() << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			apply_effect(handle, outReport);
+			APPLY();
 		}
 
 		glClearColor(0.f, 0.f, 0.f, 0.f);
