@@ -18,7 +18,7 @@ glew
 glib2  
 
 optional (for wayland):  
-SDL2 > 2.0.22  
+SDL2 >= 2.0.22  
 libdecor  
 
 **installing them on arch linux (or any arch based distro):**  
