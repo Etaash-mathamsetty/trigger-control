@@ -12,7 +12,6 @@ c++17 compiler
 
 required libraries:  
 libSDL2  
-libhidapi  
 libgl  
 glew  
 glib2  
@@ -22,7 +21,7 @@ SDL2 >= 2.0.22
 libdecor  
 
 **installing them on arch linux (or any arch based distro):**  
-`sudo pacman -S sdl2 hidapi glew libgl base-devel glib2 libdecor`  
+`sudo pacman -S sdl2 glew libgl base-devel glib2 libdecor`  
 
 **How to compile**  
 
@@ -55,7 +54,6 @@ first, clone the repo, then run the following commands(with any AUR helper)
 ```
 yay -S mingw-w64-glew
 yay -S mingw-w64-sdl2
-yay -S mingw-w64-hidapi
 ```
 remove glu dependencies from glew.pc  
 ```
@@ -68,7 +66,6 @@ then run,
 ```
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
 `libwinpthread-1.dll`  
-`libhidapi-0.dll`  
 `SDL2.dll`  
 `glew32.dll`  
 `libstdc++-6.dll`  
