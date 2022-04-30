@@ -425,13 +425,10 @@ int main(int argc, char **argv)
 			}
 		}
 #define APPLY()                                                 \
-	uint8_t *_outReport = new uint8_t[78];                      \
-	memset(_outReport, 0, 78);                                  \
-	_outReport[11] = (uint8_t)dualsense_modes::Rigid_B;         \
-	_outReport[22] = (uint8_t)dualsense_modes::Rigid_B;         \
-	apply_effect(handle, _outReport);                           \
-	std::this_thread::sleep_for(std::chrono::milliseconds(50)); \
-	delete _outReport;                                          \
+	outReport[11] = (uint8_t)dualsense_modes::Rigid_B;         \
+	outReport[22] = (uint8_t)dualsense_modes::Rigid_B;         \
+	apply_effect(handle, outReport);                           \
+	std::this_thread::sleep_for(std::chrono::milliseconds(70)); \
 	outReport[11] = (uint8_t)get_mode(right_cur);               \
 	outReport[22] = (uint8_t)get_mode(left_cur);                \
 	apply_effect(handle, outReport)
