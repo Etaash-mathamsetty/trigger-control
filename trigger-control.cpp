@@ -36,6 +36,10 @@
 #include <chrono>
 #include <thread>
 
+#if !SDL_VERSION_ATLEAST(2,0,14)
+#error SDL2 version 2.0.14 or higher is required
+#endif
+
 const char *VERSION = "Version 1.4";
 char *CONFIG_PATH = new char[PATH_MAX];
 
