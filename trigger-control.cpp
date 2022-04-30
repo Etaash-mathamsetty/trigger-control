@@ -9,7 +9,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "icon.h"
-#include "crc32.h"
+//#include "crc32.h"
 #ifdef __linux__
 #include <glib-2.0/glib.h>
 #endif
