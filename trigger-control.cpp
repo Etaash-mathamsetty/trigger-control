@@ -295,7 +295,7 @@ int main(int argc, char **argv)
 #if SDL_VERSION_ATLEAST(2, 0, 22)
 	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
-	printf("running in wayland!\n");
+	printf("running in wayland mode!\n");
 #endif
 
 #endif
@@ -407,6 +407,8 @@ int main(int argc, char **argv)
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
+	float light_colors[3];
+	int player = 1;
 	while (running)
 	{
 
@@ -448,12 +450,11 @@ int main(int argc, char **argv)
 			{
 				error_sound();
 				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "Controller Disconnected! (or something else happened)", window);
-				std::wcout << "error: " << SDL_GetError() << std::endl;
+				std::cout << "error: " << SDL_GetError() << std::endl;
 				exit(EXIT_FAILURE);
 			}
 			APPLY();
 		}
-
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_NewFrame();
@@ -467,6 +468,7 @@ int main(int argc, char **argv)
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
+
 		//	ImGui::ShowDemoWindow();
 		if (ImGui::BeginMenuBar())
 		{
@@ -529,6 +531,61 @@ int main(int argc, char **argv)
 		if (options_open)
 		{
 			ImGui::OpenPopup("Options");
+		}
+		if(ImGui::BeginTabBar("tabs")){
+			if(ImGui::BeginTabItem("Trigger Control")){
+				if (ImGui::Button("Reset"))
+		{
+			memset(outReport, 0, 78);
+			outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+			outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+			apply_effect(handle, outReport);
+			left_cur = 0;
+			right_cur = 0;
+			// printf("reset!\n");
+			outReport[11] = (uint8_t)0;
+			outReport[22] = (uint8_t)0;
+		}
+
+		ImGui::Text("Right Trigger:");
+		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
+		uint8_t min = 0;
+		uint8_t max = UINT8_MAX;
+		outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
+#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
+		SLIDER("Right Start Intensity", &outReport[12]);
+		SLIDER("Right Effect Force", &outReport[13]);
+		SLIDER("Right Range Force", &outReport[14]);
+		SLIDER("Right Near Release Strength", &outReport[15]);
+		SLIDER("Right Near Middle Strength", &outReport[16]);
+		SLIDER("Right Pressed Strength", &outReport[17]);
+		SLIDER("Right Actuation Frequency", &outReport[20]);
+		ImGui::Text("Left Trigger:");
+		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
+		outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
+		SLIDER("Left Start Resistance", &outReport[23]);
+		SLIDER("Left Effect Force", &outReport[24]);
+		SLIDER("Left Range Force", &outReport[25]);
+		SLIDER("Left Near Release Strength", &outReport[26]);
+		SLIDER("Left Near Middle Strength", &outReport[27]);
+		SLIDER("Left Pressed Strength", &outReport[28]);
+		SLIDER("Left Actuation Frequency", &outReport[30]);
+		if (ImGui::Button("Apply"))
+		{
+			// printf("applied! bt: %d\n", bt);
+			APPLY();
+		}
+
+			ImGui::EndTabItem();
+			}
+			if(ImGui::BeginTabItem("Light Control")){
+				ImGui::ColorPicker3("Light Color", light_colors);
+				SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
+				ImGui::SliderInt("Player Number", &player, 1, 4);
+				SDL_GameControllerSetPlayerIndex(handle, player-1);
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
 		}
 
 		if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
@@ -720,48 +777,6 @@ int main(int argc, char **argv)
 
 			ImGui::EndPopup();
 		}
-		if (ImGui::Button("Reset"))
-		{
-			memset(outReport, 0, 78);
-			outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-			outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-			apply_effect(handle, outReport);
-			left_cur = 0;
-			right_cur = 0;
-			// printf("reset!\n");
-			outReport[11] = (uint8_t)0;
-			outReport[22] = (uint8_t)0;
-		}
-
-		ImGui::Text("Right Trigger:");
-		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-		uint8_t min = 0;
-		uint8_t max = UINT8_MAX;
-		outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
-#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
-		SLIDER("Right Start Intensity", &outReport[12]);
-		SLIDER("Right Effect Force", &outReport[13]);
-		SLIDER("Right Range Force", &outReport[14]);
-		SLIDER("Right Near Release Strength", &outReport[15]);
-		SLIDER("Right Near Middle Strength", &outReport[16]);
-		SLIDER("Right Pressed Strength", &outReport[17]);
-		SLIDER("Right Actuation Frequency", &outReport[20]);
-		ImGui::Text("Left Trigger:");
-		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-		outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
-		SLIDER("Left Start Resistance", &outReport[23]);
-		SLIDER("Left Effect Force", &outReport[24]);
-		SLIDER("Left Range Force", &outReport[25]);
-		SLIDER("Left Near Release Strength", &outReport[26]);
-		SLIDER("Left Near Middle Strength", &outReport[27]);
-		SLIDER("Left Pressed Strength", &outReport[28]);
-		SLIDER("Left Actuation Frequency", &outReport[30]);
-		if (ImGui::Button("Apply"))
-		{
-			// printf("applied! bt: %d\n", bt);
-			APPLY();
-		}
-
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
