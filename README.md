@@ -5,7 +5,7 @@ Dark Mode           |  Light Mode
 
 
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui,  
-works through bluetooth and usb (thx ds4windows and dualsensectl for crc32.h)  
+works through bluetooth and usb.
 
 requirments:  
 c++17 compiler   
