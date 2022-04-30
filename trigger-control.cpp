@@ -295,11 +295,11 @@ int main(int argc, char **argv)
 #if SDL_VERSION_ATLEAST(2, 0, 22)
 	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
-	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	printf("running in wayland!\n");
 #endif
 
 #endif
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
@@ -541,8 +541,8 @@ int main(int argc, char **argv)
 			CenteredText("Trigger Control");
 			CenteredText(VERSION);
 			ImGui::Separator();
-			ImGui::Text("Made with FOSS, Powered by SDL2");
-			if (ImGui::Button("OK", ImVec2(272, 25)))
+			ImGui::Text("Made with FOSS, Powered by ImGui");
+			if (ImGui::Button("OK", ImVec2(277, 25)))
 			{
 				popup_open = false;
 				ImGui::CloseCurrentPopup();
