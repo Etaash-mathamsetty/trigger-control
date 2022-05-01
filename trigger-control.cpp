@@ -36,7 +36,7 @@
 #include <chrono>
 #include <thread>
 
-#if !SDL_VERSION_ATLEAST(2,0,14)
+#if !SDL_VERSION_ATLEAST(2, 0, 14)
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
@@ -411,8 +411,10 @@ int main(int argc, char **argv)
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
-	float light_colors[3];
+	float light_colors[3] = {0};
+	light_colors[2] = 70 / 255.0;
 	int player = 1;
+	int cur_tab = 0;
 	while (running)
 	{
 
@@ -431,9 +433,9 @@ int main(int argc, char **argv)
 			}
 		}
 #define APPLY()                                                 \
-	outReport[11] = (uint8_t)dualsense_modes::Rigid_B;         \
-	outReport[22] = (uint8_t)dualsense_modes::Rigid_B;         \
-	apply_effect(handle, outReport);                           \
+	outReport[11] = (uint8_t)dualsense_modes::Rigid_B;          \
+	outReport[22] = (uint8_t)dualsense_modes::Rigid_B;          \
+	apply_effect(handle, outReport);                            \
 	std::this_thread::sleep_for(std::chrono::milliseconds(70)); \
 	outReport[11] = (uint8_t)get_mode(right_cur);               \
 	outReport[22] = (uint8_t)get_mode(left_cur);                \
@@ -536,57 +538,77 @@ int main(int argc, char **argv)
 		{
 			ImGui::OpenPopup("Options");
 		}
-		if(ImGui::BeginTabBar("tabs")){
-			if(ImGui::BeginTabItem("Trigger Control")){
-				if (ImGui::Button("Reset"))
+		const int num_tabs = 2;
+		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) && cur_tab > 0)
 		{
-			memset(outReport, 0, 78);
-			outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-			outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-			apply_effect(handle, outReport);
-			left_cur = 0;
-			right_cur = 0;
-			// printf("reset!\n");
-			outReport[11] = (uint8_t)0;
-			outReport[22] = (uint8_t)0;
+			cur_tab--;
 		}
-
-		ImGui::Text("Right Trigger:");
-		ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-		uint8_t min = 0;
-		uint8_t max = UINT8_MAX;
-		outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
-#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
-		SLIDER("Right Start Intensity", &outReport[12]);
-		SLIDER("Right Effect Force", &outReport[13]);
-		SLIDER("Right Range Force", &outReport[14]);
-		SLIDER("Right Near Release Strength", &outReport[15]);
-		SLIDER("Right Near Middle Strength", &outReport[16]);
-		SLIDER("Right Pressed Strength", &outReport[17]);
-		SLIDER("Right Actuation Frequency", &outReport[20]);
-		ImGui::Text("Left Trigger:");
-		ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-		outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
-		SLIDER("Left Start Resistance", &outReport[23]);
-		SLIDER("Left Effect Force", &outReport[24]);
-		SLIDER("Left Range Force", &outReport[25]);
-		SLIDER("Left Near Release Strength", &outReport[26]);
-		SLIDER("Left Near Middle Strength", &outReport[27]);
-		SLIDER("Left Pressed Strength", &outReport[28]);
-		SLIDER("Left Actuation Frequency", &outReport[30]);
-		if (ImGui::Button("Apply"))
+		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) && cur_tab < num_tabs - 1)
 		{
-			// printf("applied! bt: %d\n", bt);
-			APPLY();
+			cur_tab++;
 		}
-
-			ImGui::EndTabItem();
+		if (ImGui::BeginTabBar("tabs"))
+		{
+			ImGuiTabItemFlags flags[num_tabs] = {0};
+			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER))
+			{
+				flags[cur_tab] |= ImGuiTabItemFlags_SetSelected;
 			}
-			if(ImGui::BeginTabItem("Light Control")){
+			if (ImGui::BeginTabItem("Trigger Control", nullptr, flags[0]))
+			{
+				if (ImGui::Button("Reset"))
+				{
+					memset(outReport, 0, 78);
+					outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+					outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+					apply_effect(handle, outReport);
+					left_cur = 0;
+					right_cur = 0;
+					// printf("reset!\n");
+					outReport[11] = (uint8_t)0;
+					outReport[22] = (uint8_t)0;
+				}
+
+				ImGui::Text("Right Trigger:");
+				ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
+				uint8_t min = 0;
+				uint8_t max = UINT8_MAX;
+				outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
+#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
+				SLIDER("Right Start Intensity", &outReport[12]);
+				SLIDER("Right Effect Force", &outReport[13]);
+				SLIDER("Right Range Force", &outReport[14]);
+				SLIDER("Right Near Release Strength", &outReport[15]);
+				SLIDER("Right Near Middle Strength", &outReport[16]);
+				SLIDER("Right Pressed Strength", &outReport[17]);
+				SLIDER("Right Actuation Frequency", &outReport[20]);
+				ImGui::Text("Left Trigger:");
+				ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
+				outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
+				SLIDER("Left Start Resistance", &outReport[23]);
+				SLIDER("Left Effect Force", &outReport[24]);
+				SLIDER("Left Range Force", &outReport[25]);
+				SLIDER("Left Near Release Strength", &outReport[26]);
+				SLIDER("Left Near Middle Strength", &outReport[27]);
+				SLIDER("Left Pressed Strength", &outReport[28]);
+				SLIDER("Left Actuation Frequency", &outReport[30]);
+				if (ImGui::Button("Apply"))
+				{
+					// printf("applied! bt: %d\n", bt);
+					APPLY();
+				}
+
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
+			{
 				ImGui::ColorPicker3("Light Color", light_colors);
-				SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
 				ImGui::SliderInt("Player Number", &player, 1, 4);
-				SDL_GameControllerSetPlayerIndex(handle, player-1);
+				if (ImGui::Button("Apply"))
+				{
+					SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
+					SDL_GameControllerSetPlayerIndex(handle, player - 1);
+				}
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
@@ -603,7 +625,7 @@ int main(int argc, char **argv)
 			CenteredText(VERSION);
 			ImGui::Separator();
 			ImGui::Text("Made with FOSS, Powered by ImGui");
-			if (ImGui::Button("OK", ImVec2(277, 25)))
+			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				popup_open = false;
 				ImGui::CloseCurrentPopup();
@@ -620,7 +642,7 @@ int main(int argc, char **argv)
 			std::vector<std::string> options;
 			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if (ImGui::Button("Load") && options.size() > 0)
+			if ((ImGui::Button("Load") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
 			{
 				load_preset(outReport, options[preset_index].c_str());
 				right_cur = get_index(static_cast<dualsense_modes>(outReport[11]));
@@ -629,7 +651,7 @@ int main(int argc, char **argv)
 				load_preset_open = false;
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
+			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				load_preset_open = false;
 				ImGui::CloseCurrentPopup();
@@ -642,7 +664,6 @@ int main(int argc, char **argv)
 		{
 			ImGui::OpenPopup("Preset Exists");
 		}
-
 		if (ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(300, 180), ImGuiCond_Always);
@@ -699,7 +720,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if (ImGui::Button("Save") && name[0] != '\0')
+			if ((ImGui::Button("Save"))&& name[0] != '\0')
 			{
 				auto is_name = [name](std::string a)
 				{
@@ -721,9 +742,10 @@ int main(int argc, char **argv)
 				}
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
+			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				save_preset_open = false;
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
 		}
@@ -739,15 +761,16 @@ int main(int argc, char **argv)
 			get_presets(options);
 			ImGui::Text("You cannot undo this action!");
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if (ImGui::Button("Delete!") && options.size() > 0)
+			if ((ImGui::Button("Delete!") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
 			{
 				remove((std::string(CONFIG_PATH) + options[preset_index] + ".txt").c_str());
 				delete_preset_open = false;
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
+			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				delete_preset_open = false;
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
 		}
@@ -774,9 +797,10 @@ int main(int argc, char **argv)
 				config[0] = 1;
 			}
 
-			if (ImGui::Button("Close"))
+			if (ImGui::Button("Close") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				options_open = false;
+				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
