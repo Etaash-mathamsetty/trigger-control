@@ -287,26 +287,22 @@ int main(int argc, char **argv)
 #ifdef _WIN32
 	strcpy(CONFIG_PATH, getenv("APPDATA"));
 	strcat(CONFIG_PATH, "\\trigger-control\\");
-// printf(CONFIG_PATH);
-#endif
-	// hid_init();
-#ifdef _WIN32
-// ImGui_ImplWin32_EnableDpiAwareness(); this dpi awareness thing does the opposite of what it says
 #endif
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
+	memset(config, 0, config_size);
+	// printf("sizeof bool: %d\n", sizeof(bool));
 #ifdef __linux__
 #if SDL_VERSION_ATLEAST(2, 0, 22)
 	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
 	printf("running in wayland mode!\n");
 #endif
-
 #endif
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 640, WindowFlags);
+	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 620, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 500, 400);
 	int height = 0, width = 0;
 	SDL_GetWindowSize(window, &width, &height);
@@ -343,7 +339,7 @@ int main(int argc, char **argv)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 	read_config(&config, config_size);
-	if (config[0] == 1)
+	if (config[0])
 		ImGui::StyleColorsDark();
 	else
 		ImGui::StyleColorsLight();
@@ -512,7 +508,7 @@ int main(int argc, char **argv)
 			}
 			if (ImGui::BeginMenu("Help"))
 			{
-				if(ImGui::MenuItem("Controller Navigation"))
+				if (ImGui::MenuItem("Controller Navigation"))
 				{
 					controller_navigation_help_open = true;
 				}
@@ -524,7 +520,7 @@ int main(int argc, char **argv)
 			}
 			ImGui::EndMenuBar();
 		}
-		if(controller_navigation_help_open)
+		if (controller_navigation_help_open)
 		{
 			ImGui::OpenPopup("Controller Navigation Help");
 		}
@@ -623,8 +619,9 @@ int main(int argc, char **argv)
 			}
 			ImGui::EndTabBar();
 		}
-		if(ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-			ImGui::SetWindowSize(ImVec2(500, 200), ImGuiCond_Always);
+		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			ImGui::SetWindowSize(ImVec2(500, 170), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
@@ -635,7 +632,8 @@ int main(int argc, char **argv)
 			ImGui::Text("Press (Triangle) to perform the action in the current popup");
 			ImGui::Text("Press X to change the value of something (like a slider)");
 			ImGui::Text("Use the d-pad to navigate the menus and change the sliders");
-			if(SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B)){
+			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+			{
 				controller_navigation_help_open = false;
 				ImGui::CloseCurrentPopup();
 			}
@@ -747,7 +745,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if ((ImGui::Button("Save"))&& name[0] != '\0')
+			if ((ImGui::Button("Save")) && name[0] != '\0')
 			{
 				auto is_name = [name](std::string a)
 				{
@@ -804,26 +802,23 @@ int main(int argc, char **argv)
 
 		if (ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(500, 100), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
 			// ImGui::Text("It's Empty here :(");
 
-			if (ImGui::Button("Light Mode", ImVec2(ImGui::GetWindowWidth() / 2 - 10, 25)))
-			{
-				ImGui::StyleColorsLight();
-				config[0] = 0;
-			}
-			ImGui::SameLine();
-			// fix spacing between edge and button
-			if (ImGui::Button("Dark Mode", ImVec2(ImGui::GetWindowWidth() / 2 - 14, 25)))
+			ImGui::Checkbox("Dark Mode", (bool *)&config[0]);
+			if (config[0])
 			{
 				ImGui::StyleColorsDark();
-				config[0] = 1;
 			}
-
+			else
+			{
+				ImGui::StyleColorsLight();
+			}
+			ImGui::Checkbox("Reset On Close", (bool *)&config[1]);
 			if (ImGui::Button("Close") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				options_open = false;
@@ -851,6 +846,18 @@ int main(int argc, char **argv)
 #endif
 	// hid_close(handle);
 	// hid_exit();
+	if (config[1])
+	{
+		memset(outReport, 0, 78);
+		outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+		outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+		apply_effect(handle, outReport);
+		left_cur = 0;
+		right_cur = 0;
+		// printf("reset!\n");
+		outReport[11] = (uint8_t)0;
+		outReport[22] = (uint8_t)0;
+	}
 	SDL_GameControllerClose(handle);
 	delete outReport;
 	SDL_Quit();
