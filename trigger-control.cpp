@@ -306,9 +306,10 @@ int main(int argc, char **argv)
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 520, WindowFlags);
-	SDL_SetWindowMinimumSize(window, 300, 250);
-	int height = 520, width = 640;
+	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 640, WindowFlags);
+	SDL_SetWindowMinimumSize(window, 500, 400);
+	int height = 0, width = 0;
+	SDL_GetWindowSize(window, &width, &height);
 	assert(window);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	SDL_GL_MakeCurrent(window, context);
@@ -332,6 +333,7 @@ int main(int argc, char **argv)
 	bool delete_preset_open = false;
 	bool preset_exists = false;
 	bool options_open = false;
+	bool controller_navigation_help_open = false;
 	char name[100];
 	// name.reserve(100);
 	IMGUI_CHECKVERSION();
@@ -510,6 +512,10 @@ int main(int argc, char **argv)
 			}
 			if (ImGui::BeginMenu("Help"))
 			{
+				if(ImGui::MenuItem("Controller Navigation"))
+				{
+					controller_navigation_help_open = true;
+				}
 				if (ImGui::MenuItem("About"))
 				{
 					popup_open = true;
@@ -517,6 +523,10 @@ int main(int argc, char **argv)
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenuBar();
+		}
+		if(controller_navigation_help_open)
+		{
+			ImGui::OpenPopup("Controller Navigation Help");
 		}
 		if (popup_open)
 		{
@@ -613,7 +623,24 @@ int main(int argc, char **argv)
 			}
 			ImGui::EndTabBar();
 		}
-
+		if(ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+			ImGui::SetWindowSize(ImVec2(500, 200), ImGuiCond_Always);
+			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+			_pos.x -= ImGui::GetWindowWidth() / 2;
+			_pos.y -= ImGui::GetWindowHeight() / 2;
+			ImGui::SetWindowPos(_pos);
+			ImGui::Text("Press the left shoulder button to go back a tab.");
+			ImGui::Text("Press the right shoulder button to go forward a tab.");
+			ImGui::Text("Press O to close popups");
+			ImGui::Text("Press (Triangle) to perform the action in the current popup");
+			ImGui::Text("Press X to change the value of something (like a slider)");
+			ImGui::Text("Use the d-pad to navigate the menus and change the sliders");
+			if(SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B)){
+				controller_navigation_help_open = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
 		if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			// printf("about2!\n");
