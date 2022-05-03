@@ -4,10 +4,10 @@
 //#include <hidapi/hidapi.h>
 #include <SDL2/SDL.h>
 #include <assert.h>
-#include "imgui.h"
-#include "imgui_impl_sdl.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl.h"
 //#include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdlrenderer.h"
+#include "imgui/imgui_impl_sdlrenderer.h"
 #include "icon.h"
 //#include "crc32.h"
 #ifdef __linux__
@@ -17,7 +17,7 @@
 #include <windows.h>
 #include <winuser.h>
 #include <shlobj.h>
-#include "imgui_impl_win32.h"
+#include "imgui/imgui_impl_win32.h"
 #endif
 #include <iostream>
 #ifdef __linux__
@@ -43,7 +43,7 @@
 const char *VERSION = "Version 1.4";
 char *CONFIG_PATH = new char[PATH_MAX];
 
-const uint8_t seed = 0xA2;
+//const uint8_t seed = 0xA2;
 enum class dualsense_modes
 {
 	Off = 0x0,	 // no resistance
@@ -130,7 +130,8 @@ void CenteredText(const char *text)
 {
 	ImVec2 size = ImGui::GetWindowSize();
 	ImGui::SetCursorPosX((size.x - ImGui::CalcTextSize(text).x) / 2);
-	ImGui::Text(text);
+	//fine compiler you win...
+	ImGui::Text("%s", text);
 }
 
 void error_sound()
@@ -391,7 +392,6 @@ int main(int argc, char **argv)
 	// bool bt = false;
 	//  char* path = NULL;
 	int preset_index = 0;
-	// here for potential future multi-controller support (yes, I know I can use hid_open, but it only works for a single controller)
 	SDL_GameController *handle;
 	int res = find_dev(&handle);
 	if (res == -1)
@@ -867,7 +867,7 @@ int main(int argc, char **argv)
 		outReport[22] = (uint8_t)0;
 	}
 	SDL_GameControllerClose(handle);
-	delete outReport;
+	delete[] outReport;
 	SDL_Quit();
 	if (std::filesystem::exists("imgui.ini"))
 		remove("imgui.ini");
