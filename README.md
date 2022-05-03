@@ -12,8 +12,6 @@ c++17 compiler
 
 required libraries:  
 libSDL2  
-libgl  
-glew  
 glib2  
 
 optional (for wayland):  
@@ -21,7 +19,7 @@ SDL2 >= 2.0.22
 libdecor  
 
 **installing them on arch linux (or any arch based distro):**  
-`sudo pacman -S sdl2 glew libgl base-devel glib2 libdecor`  
+`sudo pacman -S sdl2 base-devel glib2 libdecor`  
 
 **How to compile**  
 
@@ -52,13 +50,7 @@ sudo cp trigger-control /usr/bin
 I recommend arch linux for this, but you can try your luck with any other distro  
 first, clone the repo, then run the following commands(with any AUR helper)  
 ```
-yay -S mingw-w64-glew
 yay -S mingw-w64-sdl2
-```
-remove glu dependencies from glew.pc  
-```
-sudo nano /usr/i686-w64-mingw32/lib/pkgconfig/glew.pc
-sudo nano /usr/x86_64-w64-mingw32/lib/pkgconfig/glew.pc
 ```
 then run,  
 ```
@@ -66,8 +58,7 @@ then run,
 ```
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
 `libwinpthread-1.dll`  
-`SDL2.dll`  
-`glew32.dll`  
+`SDL2.dll`   
 `libstdc++-6.dll`  
 `libgcc_s_seh-1.dll`  
 from  
