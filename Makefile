@@ -25,4 +25,4 @@ trigger-control:	$(OBJS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $<
 
 clean:
-	rm -fr trigger-control trigger-control.exe imgui_impl_win32.o  $(OBJS)
+	rm -fr trigger-control trigger-control.exe imgui/imgui_impl_win32.o  $(OBJS)
