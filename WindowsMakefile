@@ -1,6 +1,6 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-OBJS = trigger-control.o imgui.o imgui_impl_opengl3.o imgui_impl_sdl.o imgui_impl_win32.o imgui_demo.o imgui_draw.o imgui_tables.o imgui_widgets.o
+OBJS = trigger-control.o imgui.o imgui_impl_sdlrenderer.o imgui_impl_sdl.o imgui_impl_win32.o imgui_demo.o imgui_draw.o imgui_tables.o imgui_widgets.o
 CROSS=x86_64-w64-mingw32-
 LIBRARIES = -lmingw32 -lopengl32 -luuid -lgdi32 -lcomdlg32 -ldwmapi `$(CROSS)pkg-config --libs --cflags sdl2` `$(CROSS)pkg-config --libs --cflags glew`
 CFLAGS = -O2 -Wall -std=c++17

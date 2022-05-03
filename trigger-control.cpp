@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 //#include <hidapi/hidapi.h>
-#include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <assert.h>
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
-#include "imgui_impl_opengl3.h"
+//#include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdlrenderer.h"
 #include "icon.h"
 //#include "crc32.h"
 #ifdef __linux__
@@ -307,8 +307,8 @@ int main(int argc, char **argv)
 	int height = 0, width = 0;
 	SDL_GetWindowSize(window, &width, &height);
 	assert(window);
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-	SDL_GL_MakeCurrent(window, context);
+	//SDL_GLContext context = SDL_GL_CreateContext(window);
+	//SDL_GL_MakeCurrent(window, context);
 	SDL_Surface *surface;
 	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 * gimp_image.width, SDL_PIXELFORMAT_RGBA32);
 	SDL_SetWindowIcon(window, surface);
@@ -321,8 +321,10 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 #endif
-	glewExperimental = true;
-	glewInit();
+	//glewExperimental = true;
+	//glewInit();
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
 	bool popup_open = false;
 	bool save_preset_open = false;
 	bool load_preset_open = false;
@@ -349,9 +351,11 @@ int main(int argc, char **argv)
 	ImGui::GetStyle().FrameRounding = 5.0f;
 	ImGui::GetStyle().GrabRounding = 5.0f;
 	// setup platform/renderer bindings
-	ImGui_ImplSDL2_InitForOpenGL(window, context);
-	ImGui_ImplOpenGL3_Init("#version 100");
-	SDL_GL_SetSwapInterval(1);
+	//ImGui_ImplSDL2_InitForOpenGL(window, context);
+	//ImGui_ImplOpenGL3_Init("#version 100");
+	//SDL_GL_SetSwapInterval(1);
+	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+	ImGui_ImplSDLRenderer_Init(renderer);
 // float dpi_scaling = 1.0f;
 #ifdef _WIN32
 	float dpi_x, dpi_y, dpi_z;
@@ -427,7 +431,7 @@ int main(int argc, char **argv)
 			if (event.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
 				SDL_GetWindowSize(window, &width, &height);
-				glViewport(0, 0, width, height);
+				//glViewport(0, 0, width, height);
 			}
 		}
 #define APPLY()                                                 \
@@ -459,10 +463,13 @@ int main(int argc, char **argv)
 			}
 			APPLY();
 		}
-		glClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame(window);
+		//glClearColor(0.f, 0.f, 0.f, 0.f);
+		//glClear(GL_COLOR_BUFFER_BIT);
+		//ImGui_ImplOpenGL3_NewFrame();
+		SDL_SetRenderDrawColor(renderer,0,0,0,0);
+        SDL_RenderClear(renderer);
+		ImGui_ImplSDLRenderer_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 		ImGui::SetNextWindowSize(
 			ImVec2(float(width), float(height)),
@@ -829,15 +836,16 @@ int main(int argc, char **argv)
 		}
 		ImGui::End();
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		SDL_GL_SwapWindow(window);
+		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+		SDL_RenderPresent(renderer);
+		
 	}
-	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDLRenderer_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
 
-	SDL_GL_DeleteContext(context);
+	//SDL_GL_DeleteContext(context);
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 
 #ifdef __linux__
