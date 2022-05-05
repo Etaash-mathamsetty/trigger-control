@@ -55,14 +55,14 @@ void create_config_path_dir()
 {
 #ifdef __linux__
 	if (!std::filesystem::is_directory(CONFIG_PATH))
-		mkdir(CONFIG_PATH, 0777);
+		std::filesystem::create_directory(CONFIG_PATH);
 #endif
 #ifdef _WIN32
 	// lmao windows with the wide char paths
 	std::wstring wc(strlen(CONFIG_PATH), L'#');
 	mbstowcs(&wc[0], CONFIG_PATH, strlen(CONFIG_PATH));
 	if (!std::filesystem::is_directory(wc))
-		mkdir(CONFIG_PATH);
+		std::filesystem::create_directory(wc);
 #endif
 }
 
