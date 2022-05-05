@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <hidapi/hidapi.h>
 #include <SDL2/SDL.h>
 #include <assert.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
-//#include "imgui_impl_opengl3.h"
 #include "imgui/imgui_impl_sdlrenderer.h"
 #include "icon.h"
-//#include "crc32.h"
 #ifdef __linux__
 #include <glib-2.0/glib.h>
+#include <SDL2/SDL_mixer.h>
 #endif
 #ifdef _WIN32
 #include <windows.h>
@@ -20,13 +18,9 @@
 #include "imgui/imgui_impl_win32.h"
 #endif
 #include <iostream>
-#ifdef __linux__
-#include <SDL2/SDL_mixer.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <pwd.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
