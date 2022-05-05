@@ -18,9 +18,6 @@
 #include "imgui/imgui_impl_win32.h"
 #endif
 #include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -546,18 +543,20 @@ int main(int argc, char **argv)
 			ImGui::OpenPopup("Options");
 		}
 		const int num_tabs = 2;
-		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) && cur_tab > 0)
+		bool left_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+		bool right_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+		if (left_shoulder && cur_tab > 0)
 		{
 			cur_tab--;
 		}
-		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) && cur_tab < num_tabs - 1)
+		if (right_shoulder && cur_tab < num_tabs - 1)
 		{
 			cur_tab++;
 		}
 		if (ImGui::BeginTabBar("tabs"))
 		{
-			ImGuiTabItemFlags flags[num_tabs] = {0};
-			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER))
+			ImGuiTabItemFlags flags[num_tabs] = {ImGuiTabBarFlags_None};
+			if (left_shoulder || right_shoulder)
 			{
 				flags[cur_tab] |= ImGuiTabItemFlags_SetSelected;
 			}
@@ -864,7 +863,7 @@ int main(int argc, char **argv)
 	delete[] outReport;
 	SDL_Quit();
 	if (std::filesystem::exists("imgui.ini"))
-		remove("imgui.ini");
+		std::filesystem::remove("imgui.ini");
 	write_config(config, config_size);
 	// program termination should free memory I forgot to free :D
 	return 0;
