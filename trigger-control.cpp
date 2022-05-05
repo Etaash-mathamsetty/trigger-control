@@ -316,7 +316,6 @@ int main(int argc, char **argv)
 	//glewExperimental = true;
 	//glewInit();
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-
 	bool popup_open = false;
 	bool save_preset_open = false;
 	bool load_preset_open = false;
@@ -366,14 +365,19 @@ int main(int argc, char **argv)
 #ifdef __linux__
 	// should work for some people, but not all
 	// probably arch based distros
+		ImVector<ImWchar> ranges;
+		ImFontGlyphRangesBuilder builder;
+		builder.AddChar(L'Δ'); 
+		builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+		builder.BuildRanges(&ranges);
 	if (std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
-		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f);
+		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
 	}
 	// probably ubuntu based
 	else if (std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"))
 	{
-		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f);
+		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
 	}
 	else
 	{
@@ -621,17 +625,17 @@ int main(int argc, char **argv)
 		}
 		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			ImGui::SetWindowSize(ImVec2(500, 170), ImGuiCond_Always);
+			ImGui::SetWindowSize(ImVec2(510, 170), ImGuiCond_Always);
 			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
-			ImGui::Text("Press the left shoulder button to go back a tab.");
-			ImGui::Text("Press the right shoulder button to go forward a tab.");
-			ImGui::Text("Press O to close popups");
-			ImGui::Text("Press (Triangle) to perform the action in the current popup");
-			ImGui::Text("Press X to change the value of something (like a slider)");
-			ImGui::Text("Use the d-pad to navigate the menus and change the sliders");
+			ImGui::BulletText("Press the left shoulder button to go back a tab.");
+			ImGui::BulletText("Press the right shoulder button to go forward a tab.");
+			ImGui::BulletText("Press O to close popups");
+			ImGui::BulletText("Press Δ to perform the action in the current popup");
+			ImGui::BulletText("Press X to change the value of something (like a slider)");
+			ImGui::BulletText("Use the d-pad to navigate the menus and change the sliders");
 			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
 			{
 				controller_navigation_help_open = false;
