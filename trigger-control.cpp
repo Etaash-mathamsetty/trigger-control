@@ -348,6 +348,12 @@ int main(int argc, char **argv)
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	ImGui_ImplSDLRenderer_Init(renderer);
 // float dpi_scaling = 1.0f;
+	ImVector<ImWchar> ranges;
+	ImFontGlyphRangesBuilder builder;
+	builder.AddChar(L'Δ'); 
+	builder.AddChar(L'▢');
+	builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+	builder.BuildRanges(&ranges);
 #ifdef _WIN32
 	float dpi_x, dpi_y, dpi_z;
 	SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
@@ -358,18 +364,14 @@ int main(int argc, char **argv)
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
 	{
-		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling);
+		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling, NULL, ranges.Data);
 		io.FontGlobalScale = 0.5f;
 	}
 #endif
 #ifdef __linux__
 	// should work for some people, but not all
 	// probably arch based distros
-		ImVector<ImWchar> ranges;
-		ImFontGlyphRangesBuilder builder;
-		builder.AddChar(L'Δ'); 
-		builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
-		builder.BuildRanges(&ranges);
+
 	if (std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
