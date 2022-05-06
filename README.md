@@ -12,14 +12,15 @@ c++17 compiler
 
 required libraries:  
 libSDL2  
-glib2  
+glib2    
 
-optional (for wayland):  
-SDL2 >= 2.0.22  
-libdecor  
+optional:  
+SDL2 >= 2.0.22 (for wayland)  
+libdecor (for wayland)  
+ttf-dejavu (better font)  
 
 **installing them on arch linux (or any arch based distro):**  
-`sudo pacman -S sdl2 base-devel glib2 libdecor`  
+`sudo pacman -S sdl2 base-devel glib2 libdecor ttf-dejavu`  
 
 **How to compile**  
 
