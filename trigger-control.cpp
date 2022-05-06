@@ -34,7 +34,6 @@
 const char *VERSION = "Version 1.4";
 char *CONFIG_PATH = new char[PATH_MAX];
 
-//const uint8_t seed = 0xA2;
 enum class dualsense_modes
 {
 	Off = 0x0,	 // no resistance
@@ -69,22 +68,18 @@ void load_preset(uint8_t *outReport, const char *name)
 	std::string path = std::string(CONFIG_PATH);
 	path += name;
 	path += ".txt";
-	// std::cout << path << std::endl;
 	FILE *f = fopen(path.c_str(), "rb");
 	if (f)
 	{
 		fread(outReport + 11, sizeof(*outReport), 30 - 10, f);
 		fclose(f);
 	}
-	// printf("stub!\n");
 }
 
 void save_preset(const uint8_t *outReport, const char *name)
 {
 	create_config_path_dir();
-	// printf("stub!\n");
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
-	// open(path.c_str(), O_RDWR | O_CREAT, 0777);
 	FILE *f = fopen(path.c_str(), "wb");
 	if (!f)
 		return;
@@ -121,7 +116,7 @@ void CenteredText(const char *text)
 {
 	ImVec2 size = ImGui::GetWindowSize();
 	ImGui::SetCursorPosX((size.x - ImGui::CalcTextSize(text).x) / 2);
-	//fine compiler you win...
+	// fine compiler you win...
 	ImGui::Text("%s", text);
 }
 
@@ -251,7 +246,6 @@ void get_presets(std::vector<std::string> &options)
 		{
 			options.push_back(filename);
 		}
-		// options.push_back(filename);
 	}
 #endif
 #ifdef _WIN32
@@ -264,7 +258,6 @@ void get_presets(std::vector<std::string> &options)
 		{
 			options.push_back(str2);
 		}
-		//	options.push_back(str2);
 	}
 #endif
 }
@@ -299,8 +292,6 @@ int main(int argc, char **argv)
 	int height = 0, width = 0;
 	SDL_GetWindowSize(window, &width, &height);
 	assert(window);
-	//SDL_GLContext context = SDL_GL_CreateContext(window);
-	//SDL_GL_MakeCurrent(window, context);
 	SDL_Surface *surface;
 	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 * gimp_image.width, SDL_PIXELFORMAT_RGBA32);
 	SDL_SetWindowIcon(window, surface);
@@ -313,9 +304,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 #endif
-	//glewExperimental = true;
-	//glewInit();
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	bool popup_open = false;
 	bool save_preset_open = false;
 	bool load_preset_open = false;
@@ -341,16 +330,11 @@ int main(int argc, char **argv)
 	ImGui::GetStyle().PopupRounding = 5.0f;
 	ImGui::GetStyle().FrameRounding = 5.0f;
 	ImGui::GetStyle().GrabRounding = 5.0f;
-	// setup platform/renderer bindings
-	//ImGui_ImplSDL2_InitForOpenGL(window, context);
-	//ImGui_ImplOpenGL3_Init("#version 100");
-	//SDL_GL_SetSwapInterval(1);
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	ImGui_ImplSDLRenderer_Init(renderer);
-// float dpi_scaling = 1.0f;
 	ImVector<ImWchar> ranges;
 	ImFontGlyphRangesBuilder builder;
-	builder.AddChar(L'Δ'); 
+	builder.AddChar(L'Δ');
 	builder.AddChar(L'▢');
 	builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
 	builder.BuildRanges(&ranges);
@@ -358,8 +342,6 @@ int main(int argc, char **argv)
 	float dpi_x, dpi_y, dpi_z;
 	SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
 	float dpi_scaling = dpi_x / 96.0f;
-	// std::cout << dpi_scaling << std::endl;
-	// SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"DPI",std::to_string(dpi_scaling).c_str(),window);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
@@ -371,7 +353,6 @@ int main(int argc, char **argv)
 #ifdef __linux__
 	// should work for some people, but not all
 	// probably arch based distros
-
 	if (std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
 		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
@@ -386,8 +367,6 @@ int main(int argc, char **argv)
 		printf("could not find font\n");
 	}
 #endif
-	// bool bt = false;
-	//  char* path = NULL;
 	int preset_index = 0;
 	SDL_GameController *handle;
 	int res = find_dev(&handle);
@@ -398,10 +377,7 @@ int main(int argc, char **argv)
 		std::cout << "error: " << SDL_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	// printf("%d\n",bt);
-	// free(path);
 	bool running = true;
-	// SDL_SetWindowResizable(window, SDL_bool::SDL_TRUE);
 	uint8_t *outReport = new uint8_t[78];
 	memset(outReport, 0, 78);
 	outReport[0] = 0x2;
@@ -428,7 +404,6 @@ int main(int argc, char **argv)
 			if (event.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
 				SDL_GetWindowSize(window, &width, &height);
-				//glViewport(0, 0, width, height);
 			}
 		}
 #define APPLY()                                                 \
@@ -455,24 +430,19 @@ int main(int argc, char **argv)
 			}
 			APPLY();
 		}
-		//glClearColor(0.f, 0.f, 0.f, 0.f);
-		//glClear(GL_COLOR_BUFFER_BIT);
-		//ImGui_ImplOpenGL3_NewFrame();
-		SDL_SetRenderDrawColor(renderer,0,0,0,0);
-        SDL_RenderClear(renderer);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+		SDL_RenderClear(renderer);
 		ImGui_ImplSDLRenderer_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 		ImGui::SetNextWindowSize(
 			ImVec2(float(width), float(height)),
 			ImGuiCond_Always);
 		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
-		// ImGui::ShowDemoWindow();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings);
 		ImGui::PopStyleVar();
 
-		//	ImGui::ShowDemoWindow();
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -601,7 +571,6 @@ int main(int argc, char **argv)
 				SLIDER("Left Actuation Frequency", &outReport[30]);
 				if (ImGui::Button("Apply"))
 				{
-					// printf("applied! bt: %d\n", bt);
 					APPLY();
 				}
 
@@ -734,9 +703,7 @@ int main(int argc, char **argv)
 				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
 				{
 					printf("Preset already exists!\n");
-					// ImGui::CloseCurrentPopup();
 					save_preset_open = false;
-					// ImGui::OpenPopup("Preset Exists!");
 					preset_exists = true;
 				}
 				else
@@ -755,10 +722,7 @@ int main(int argc, char **argv)
 				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
 				{
 					printf("Preset already exists!\n");
-					// preset_exists = true;
-					// ImGui::CloseCurrentPopup();
 					save_preset_open = false;
-					// ImGui::OpenPopup("Preset Exists!");
 					preset_exists = true;
 				}
 				else
@@ -791,7 +755,7 @@ int main(int argc, char **argv)
 			{
 				std::filesystem::remove(std::string(CONFIG_PATH) + options[preset_index] + ".txt");
 				delete_preset_open = false;
-				preset_index = 0; //prevents blank selection
+				preset_index = 0; // prevents blank selection
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
@@ -834,13 +798,10 @@ int main(int argc, char **argv)
 		ImGui::Render();
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);
-		
 	}
 	ImGui_ImplSDLRenderer_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
-
-	//SDL_GL_DeleteContext(context);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 
@@ -848,8 +809,6 @@ int main(int argc, char **argv)
 	Mix_CloseAudio();
 	Mix_Quit();
 #endif
-	// hid_close(handle);
-	// hid_exit();
 	if (config[1])
 	{
 		memset(outReport, 0, 78);
@@ -858,7 +817,6 @@ int main(int argc, char **argv)
 		apply_effect(handle, outReport);
 		left_cur = 0;
 		right_cur = 0;
-		// printf("reset!\n");
 		outReport[11] = (uint8_t)0;
 		outReport[22] = (uint8_t)0;
 	}
