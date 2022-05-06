@@ -789,8 +789,10 @@ int main(int argc, char **argv)
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if ((ImGui::Button("Delete!") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
 			{
-				remove((std::string(CONFIG_PATH) + options[preset_index] + ".txt").c_str());
+				std::filesystem::remove(std::string(CONFIG_PATH) + options[preset_index] + ".txt");
 				delete_preset_open = false;
+				preset_index = 0; //prevents blank selection
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
