@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 #endif
 #endif
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 620, WindowFlags);
 	SDL_SetWindowMinimumSize(window, 500, 400);
@@ -443,12 +443,7 @@ int main(int argc, char **argv)
 		// const wchar_t *error = hid_error(handle);
 		if (SDL_GameControllerGetAttached(handle) == SDL_FALSE)
 		{
-#ifdef __linux__
-			sleep(1);
-#endif
-#ifdef _WIN32
-			Sleep(1000);
-#endif
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 			SDL_GameControllerClose(handle);
 			int res = find_dev(&handle);
 			if (res == -1)
