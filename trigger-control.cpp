@@ -351,20 +351,14 @@ int main(int argc, char **argv)
 	}
 #endif
 #ifdef __linux__
-	// should work for some people, but not all
-	// probably arch based distros
-	if (std::filesystem::exists("/usr/share/fonts/TTF/DejaVuSans.ttf"))
-	{
-		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
-	}
-	// probably ubuntu based
-	else if (std::filesystem::exists("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"))
-	{
-		io.Fonts->AddFontFromFileTTF("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18.0f, NULL, ranges.Data);
-	}
-	else
-	{
-		printf("could not find font\n");
+	// probably should work for all distros
+	for(auto file : std::filesystem::recursive_directory_iterator("/usr/share/fonts/")){
+		if(file.is_directory()) continue;
+		if(file.path().filename() == "DejaVuSans.ttf"){
+			io.Fonts->AddFontFromFileTTF(file.path().c_str(), 36.0f, NULL, ranges.Data);
+			io.FontGlobalScale = 0.5f;
+			break;
+		}
 	}
 #endif
 	int preset_index = 0;
