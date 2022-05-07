@@ -352,9 +352,12 @@ int main(int argc, char **argv)
 #endif
 #ifdef __linux__
 	// probably should work for all distros
-	for(auto file : std::filesystem::recursive_directory_iterator("/usr/share/fonts/")){
-		if(file.is_directory()) continue;
-		if(file.path().filename() == "DejaVuSans.ttf"){
+	for (auto file : std::filesystem::recursive_directory_iterator("/usr/share/fonts/"))
+	{
+		if (file.is_directory())
+			continue;
+		if (file.path().filename() == "DejaVuSans.ttf")
+		{
 			io.Fonts->AddFontFromFileTTF(file.path().c_str(), 36.0f, NULL, ranges.Data);
 			io.FontGlobalScale = 0.5f;
 			break;
