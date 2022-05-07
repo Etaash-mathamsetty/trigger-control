@@ -157,7 +157,6 @@ int find_dev(SDL_GameController **handle)
 			}
 		}
 	}
-	// printf("%ls\n", hid_error(*handle));
 	return -1;
 }
 
@@ -276,7 +275,6 @@ int main(int argc, char **argv)
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
 	memset(config, 0, config_size);
-	// printf("sizeof bool: %d\n", sizeof(bool));
 #ifdef __linux__
 #if SDL_VERSION_ATLEAST(2, 0, 22)
 	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
@@ -313,7 +311,6 @@ int main(int argc, char **argv)
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
 	char name[100];
-	// name.reserve(100);
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO &io = ImGui::GetIO();
@@ -412,7 +409,6 @@ int main(int argc, char **argv)
 	outReport[22] = (uint8_t)get_mode(left_cur);                \
 	apply_effect(handle, outReport)
 
-		// const wchar_t *error = hid_error(handle);
 		if (SDL_GameControllerGetAttached(handle) == SDL_FALSE)
 		{
 			std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -448,19 +444,16 @@ int main(int argc, char **argv)
 				{
 					load_preset_open = true;
 					memset(name, 0, sizeof(name));
-					// name.clear();
 				}
 				if (ImGui::MenuItem("Save Preset"))
 				{
 					save_preset_open = true;
 					memset(name, 0, sizeof(name));
-					// name.clear();
 				}
 				if (ImGui::MenuItem("Delete Preset"))
 				{
 					delete_preset_open = true;
 					memset(name, 0, sizeof(name));
-					// name.clear();
 				}
 				ImGui::EndMenu();
 			}
@@ -538,7 +531,6 @@ int main(int argc, char **argv)
 					apply_effect(handle, outReport);
 					left_cur = 0;
 					right_cur = 0;
-					// printf("reset!\n");
 					outReport[11] = (uint8_t)0;
 					outReport[22] = (uint8_t)0;
 				}
@@ -771,8 +763,6 @@ int main(int argc, char **argv)
 			_pos.x -= ImGui::GetWindowWidth() / 2;
 			_pos.y -= ImGui::GetWindowHeight() / 2;
 			ImGui::SetWindowPos(_pos);
-			// ImGui::Text("It's Empty here :(");
-
 			ImGui::Checkbox("Dark Mode", (bool *)&config[0]);
 			if (config[0])
 			{
