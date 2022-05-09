@@ -51,7 +51,7 @@ sudo cp trigger-control /usr/bin
 I recommend arch linux for this, but you can try your luck with any other distro  
 first, clone the repo, then run the following commands(with any AUR helper)  
 ```
-yay -S mingw-w64-sdl2 mingw-w64-pkg-config
+yay -S mingw-w64-pkg-config mingw-w64-sdl2 
 ```
 then run,  
 ```
