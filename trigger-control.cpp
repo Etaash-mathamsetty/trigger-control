@@ -31,7 +31,7 @@
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
-const char *VERSION = "Version 1.4";
+const char *VERSION = "Version 1.4.1";
 char *CONFIG_PATH = new char[PATH_MAX];
 
 enum class dualsense_modes
