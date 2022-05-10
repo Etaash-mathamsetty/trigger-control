@@ -335,15 +335,18 @@ int main(int argc, char **argv)
 	builder.AddChar(L'▢');
 	builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
 	builder.BuildRanges(&ranges);
-#ifdef _WIN32
-	float dpi_x, dpi_y, dpi_z;
-	SDL_GetDisplayDPI(0, &dpi_x, &dpi_y, &dpi_z);
-	float dpi_scaling = dpi_x / 96.0f;
+	//wierd stuff for hidpi (it actually works though)
+	int _width, _height;
+	SDL_GetRendererOutputSize(renderer, &_width, &_height);
+	float dpi_scaling = _width/(float)width;
+	printf("dpi scaling: %f\n", dpi_scaling);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
+	SDL_RenderSetScale(renderer, dpi_scaling, dpi_scaling);
+#ifdef _WIN32
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
 	{
-		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f * dpi_scaling, NULL, ranges.Data);
+		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f, NULL, ranges.Data);
 		io.FontGlobalScale = 0.5f;
 	}
 #endif
