@@ -1,4 +1,4 @@
-# trigger control  
+# Trigger Control  
 Dark Mode           |  Light Mode
 :-------------------------:|:-------------------------:
 ![image](https://user-images.githubusercontent.com/45927311/166091284-a06013df-f443-48a1-8e15-514690b43200.png) | ![image](https://user-images.githubusercontent.com/45927311/166091275-4f970e14-5a16-4f1e-b96b-4e823cdcfcae.png)
