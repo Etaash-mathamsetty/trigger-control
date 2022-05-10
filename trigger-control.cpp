@@ -271,6 +271,7 @@ int main(int argc, char **argv)
 #ifdef _WIN32
 	strcpy(CONFIG_PATH, getenv("APPDATA"));
 	strcat(CONFIG_PATH, "\\trigger-control\\");
+	ImGui_ImplWin32_EnableDpiAwareness();
 #endif
 	const size_t config_size = 10;
 	char *config = (char *)alloca(sizeof(char) * config_size);
