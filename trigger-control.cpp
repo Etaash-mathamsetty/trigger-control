@@ -49,6 +49,8 @@ enum class dualsense_modes
 	INVALID = 0xFFFF
 };
 
+
+
 void create_config_path_dir()
 {
 #ifdef __linux__
@@ -215,7 +217,7 @@ int get_index(dualsense_modes mode)
 	default:
 		break;
 	}
-	return 0;
+	return -1;
 }
 
 // this code is satisfying to look at
@@ -271,9 +273,10 @@ bool check_valid(std::string path)
 		return false;
 	}
 	FILE *f = fopen(path.c_str(), "rb");
-	char x = fgetc(f);
+	uint8_t x = fgetc(f);
 	fclose(f);
-	if (get_mode(x) == dualsense_modes::INVALID)
+	const uint8_t valid_modes[9] = {0x0, 0x1, 0x2, 0x1 | 0x20, 0x1 | 0x04, 0x1 | 0x20 | 0x04, 0x2 | 0x20, 0x2 | 0x04, 0x2 | 0x20 | 0x04};
+	if (std::find(std::begin(valid_modes), std::end(valid_modes), x) == std::end(valid_modes))
 	{
 		return false;
 	}
