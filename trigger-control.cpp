@@ -265,7 +265,7 @@ void get_presets(std::vector<std::string> &options)
 
 bool check_valid(std::string path)
 {
-	//std::cout << std::filesystem::file_size(path) << std::endl;
+	// std::cout << std::filesystem::file_size(path) << std::endl;
 	if (std::filesystem::file_size(path) != 20)
 	{
 		return false;
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 	bool preset_exists = false;
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
-	//bool preset_load_exists = false;
+	// bool preset_load_exists = false;
 	char name[100];
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -471,12 +471,12 @@ int main(int argc, char **argv)
 				}
 				if (ImGui::MenuItem("Load Preset from File"))
 				{
-					#ifdef __linux__
+#ifdef __linux__
 					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("HOME")) + "/");
-					#endif
-					#ifdef _WIN32
+#endif
+#ifdef _WIN32
 					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("USERPROFILE")) + "\\");
-					#endif
+#endif
 					memset(name, 0, sizeof(name));
 				}
 				if (ImGui::MenuItem("Save Preset"))
@@ -638,10 +638,14 @@ int main(int argc, char **argv)
 						load_preset(outReport, __name.c_str());
 						APPLY();
 					}
-					else{
-						std::cerr << "Preset already exists" << std::endl;
+					else
+					{
 						SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Preset already exists", window);
 					}
+				}
+				else
+				{
+					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Invalid Preset", window);
 				}
 			}
 			ImGuiFileDialog::Instance()->Close();
