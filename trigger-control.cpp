@@ -6,6 +6,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
 #include "imgui/imgui_impl_sdlrenderer.h"
+#include "imgui/ImGuiFileDialog.h"
 #include "icon.h"
 #ifdef __linux__
 #include <glib-2.0/glib.h>
@@ -31,7 +32,7 @@
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
-const char *VERSION = "Version 1.4.1";
+const char *VERSION = "Version 1.5";
 char *CONFIG_PATH = new char[PATH_MAX];
 
 enum class dualsense_modes
@@ -45,6 +46,7 @@ enum class dualsense_modes
 	Pulse_A = 0x2 | 0x20,
 	Pulse_B = 0x2 | 0x04,
 	Pulse_AB = 0x2 | 0x20 | 0x04,
+	INVALID = 0xFFFF
 };
 
 void create_config_path_dir()
@@ -185,7 +187,7 @@ dualsense_modes get_mode(int index)
 	default:
 		break;
 	}
-	return dualsense_modes::Off;
+	return dualsense_modes::INVALID;
 }
 
 int get_index(dualsense_modes mode)
@@ -261,6 +263,23 @@ void get_presets(std::vector<std::string> &options)
 #endif
 }
 
+bool check_valid(std::string path)
+{
+	//std::cout << std::filesystem::file_size(path) << std::endl;
+	if (std::filesystem::file_size(path) != 20)
+	{
+		return false;
+	}
+	FILE *f = fopen(path.c_str(), "rb");
+	char x = fgetc(f);
+	fclose(f);
+	if (get_mode(x) == dualsense_modes::INVALID)
+	{
+		return false;
+	}
+	return true;
+}
+
 int main(int argc, char **argv)
 {
 	memset(CONFIG_PATH, 0, PATH_MAX);
@@ -311,6 +330,7 @@ int main(int argc, char **argv)
 	bool preset_exists = false;
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
+	//bool preset_load_exists = false;
 	char name[100];
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -336,10 +356,10 @@ int main(int argc, char **argv)
 	builder.AddChar(L'▢');
 	builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
 	builder.BuildRanges(&ranges);
-	//wierd stuff for hidpi (it actually works though)
+	// wierd stuff for hidpi (it actually works though)
 	int _width, _height;
 	SDL_GetRendererOutputSize(renderer, &_width, &_height);
-	float dpi_scaling = _width/(float)width;
+	float dpi_scaling = _width / (float)width;
 	printf("dpi scaling: %f\n", dpi_scaling);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	SDL_RenderSetScale(renderer, dpi_scaling, dpi_scaling);
@@ -447,6 +467,16 @@ int main(int argc, char **argv)
 				if (ImGui::MenuItem("Load Preset"))
 				{
 					load_preset_open = true;
+					memset(name, 0, sizeof(name));
+				}
+				if (ImGui::MenuItem("Load Preset from File"))
+				{
+					#ifdef __linux__
+					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("HOME")) + "/");
+					#endif
+					#ifdef _WIN32
+					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("USERPROFILE")) + "\\");
+					#endif
 					memset(name, 0, sizeof(name));
 				}
 				if (ImGui::MenuItem("Save Preset"))
@@ -581,6 +611,40 @@ int main(int argc, char **argv)
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
+		}
+		ImGui::SetNextWindowFocus();
+		if (ImGuiFileDialog::Instance()->Display("Choose Preset", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, ImVec2(width - 200, height - 200)))
+		{
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				// load_preset_from_file_open = false;
+				std::string path = ImGuiFileDialog::Instance()->GetFilePathName();
+				std::string __name;
+#ifdef __linux__
+				__name = path.substr(path.find_last_of("/") + 1);
+#endif
+#ifdef _WIN32
+				__name = path.substr(path.find_last_of("\\") + 1);
+#endif
+				__name = __name.substr(0, __name.find_last_of("."));
+				// copy preset into config path
+				std::vector<std::string> options;
+				get_presets(options);
+				if (check_valid(path))
+				{
+					if (std::find(options.begin(), options.end(), __name) == options.end())
+					{
+						std::filesystem::copy(path, CONFIG_PATH);
+						load_preset(outReport, __name.c_str());
+						APPLY();
+					}
+					else{
+						std::cerr << "Preset already exists" << std::endl;
+						SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Preset already exists", window);
+					}
+				}
+			}
+			ImGuiFileDialog::Instance()->Close();
 		}
 		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
