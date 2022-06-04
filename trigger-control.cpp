@@ -6,7 +6,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
 #include "imgui/imgui_impl_sdlrenderer.h"
-#include "imgui/ImGuiFileDialog.h"
+#include "imgui/imfilebrowser.h"
 #include "icon.h"
 #ifdef __linux__
 #include <glib-2.0/glib.h>
@@ -48,8 +48,6 @@ enum class dualsense_modes
 	Pulse_AB = 0x2 | 0x20 | 0x04,
 	INVALID = 0xFFFF
 };
-
-
 
 void create_config_path_dir()
 {
@@ -411,6 +409,10 @@ int main(int argc, char **argv)
 	light_colors[2] = 70 / 255.0;
 	int player = 1;
 	int cur_tab = 0;
+	ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_NoTitleBar);
+	fileDialog.SetTitle("Choose Preset");
+	fileDialog.SetTypeFilters({".txt"});
+
 	while (running)
 	{
 
@@ -474,12 +476,7 @@ int main(int argc, char **argv)
 				}
 				if (ImGui::MenuItem("Load Preset from File"))
 				{
-#ifdef __linux__
-					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("HOME")) + "/");
-#endif
-#ifdef _WIN32
-					ImGuiFileDialog::Instance()->OpenDialog("Choose Preset", "Choose a preset to load", ".txt", std::string(getenv("USERPROFILE")) + "\\");
-#endif
+					fileDialog.Open();
 					memset(name, 0, sizeof(name));
 				}
 				if (ImGui::MenuItem("Save Preset"))
@@ -540,354 +537,358 @@ int main(int argc, char **argv)
 		{
 			ImGui::OpenPopup("Options");
 		}
-		const int num_tabs = 2;
-		bool left_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-		bool right_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-		if (left_shoulder && cur_tab > 0)
-		{
-			cur_tab--;
-		}
-		if (right_shoulder && cur_tab < num_tabs - 1)
-		{
-			cur_tab++;
-		}
-		if (ImGui::BeginTabBar("tabs"))
-		{
-			ImGuiTabItemFlags flags[num_tabs] = {ImGuiTabBarFlags_None};
-			if (left_shoulder || right_shoulder)
-			{
-				flags[cur_tab] |= ImGuiTabItemFlags_SetSelected;
-			}
-			if (ImGui::BeginTabItem("Trigger Control", nullptr, flags[0]))
-			{
-				if (ImGui::Button("Reset"))
-				{
-					memset(outReport, 0, 78);
-					outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-					outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-					apply_effect(handle, outReport);
-					left_cur = 0;
-					right_cur = 0;
-					outReport[11] = (uint8_t)0;
-					outReport[22] = (uint8_t)0;
-				}
-
-				ImGui::Text("Right Trigger:");
-				ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-				uint8_t min = 0;
-				uint8_t max = UINT8_MAX;
-				outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
-#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
-				SLIDER("Right Start Intensity", &outReport[12]);
-				SLIDER("Right Effect Force", &outReport[13]);
-				SLIDER("Right Range Force", &outReport[14]);
-				SLIDER("Right Near Release Strength", &outReport[15]);
-				SLIDER("Right Near Middle Strength", &outReport[16]);
-				SLIDER("Right Pressed Strength", &outReport[17]);
-				SLIDER("Right Actuation Frequency", &outReport[20]);
-				ImGui::Text("Left Trigger:");
-				ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-				outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
-				SLIDER("Left Start Resistance", &outReport[23]);
-				SLIDER("Left Effect Force", &outReport[24]);
-				SLIDER("Left Range Force", &outReport[25]);
-				SLIDER("Left Near Release Strength", &outReport[26]);
-				SLIDER("Left Near Middle Strength", &outReport[27]);
-				SLIDER("Left Pressed Strength", &outReport[28]);
-				SLIDER("Left Actuation Frequency", &outReport[30]);
-				if (ImGui::Button("Apply"))
-				{
-					APPLY();
-				}
-
-				ImGui::EndTabItem();
-			}
-			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
-			{
-				ImGui::ColorPicker3("Light Color", light_colors);
-				ImGui::SliderInt("Player Number", &player, 1, 4);
-				if (ImGui::Button("Apply"))
-				{
-					SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
-					SDL_GameControllerSetPlayerIndex(handle, player - 1);
-				}
-				ImGui::EndTabItem();
-			}
-			ImGui::EndTabBar();
-		}
 		ImGui::SetNextWindowFocus();
-		if (ImGuiFileDialog::Instance()->Display("Choose Preset", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, ImVec2(width - 200, height - 200)))
+		fileDialog.Display();
+		if (fileDialog.HasSelected())
 		{
-			if (ImGuiFileDialog::Instance()->IsOk())
-			{
-				// load_preset_from_file_open = false;
-				std::string path = ImGuiFileDialog::Instance()->GetFilePathName();
-				std::string __name;
+			#ifdef __linux__
+			std::string path = fileDialog.GetSelected().c_str();
+			#endif
+			#ifdef _WIN32
+			std::wstring _path = fileDialog.GetSelected().c_str();
+			std::string path(_path.begin(), _path.end());
+			#endif
+			std::string __name;
 #ifdef __linux__
-				__name = path.substr(path.find_last_of("/") + 1);
+			__name = path.substr(path.find_last_of("/") + 1);
 #endif
 #ifdef _WIN32
-				__name = path.substr(path.find_last_of("\\") + 1);
+			__name = path.substr(path.find_last_of("\\") + 1);
 #endif
-				__name = __name.substr(0, __name.find_last_of("."));
-				// copy preset into config path
-				std::vector<std::string> options;
-				get_presets(options);
-				if (check_valid(path))
+			__name = __name.substr(0, __name.find_last_of("."));
+			// copy preset into config path
+			std::vector<std::string> options;
+			get_presets(options);
+			if (check_valid(path))
+			{
+				if (std::find(options.begin(), options.end(), __name) == options.end())
 				{
-					if (std::find(options.begin(), options.end(), __name) == options.end())
-					{
-						std::filesystem::copy(path, CONFIG_PATH);
-						load_preset(outReport, __name.c_str());
-						APPLY();
-					}
-					else
-					{
-						SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Preset already exists", window);
-					}
+					std::filesystem::copy(path, CONFIG_PATH);
+					load_preset(outReport, __name.c_str());
+					APPLY();
 				}
 				else
 				{
-					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Invalid Preset", window);
+					SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Preset already exists", window);
 				}
-			}
-			ImGuiFileDialog::Instance()->Close();
-		}
-		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(510, 170), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			ImGui::BulletText("Press the left shoulder button to go back a tab.");
-			ImGui::BulletText("Press the right shoulder button to go forward a tab.");
-			ImGui::BulletText("Press O to close popups");
-			ImGui::BulletText("Press Δ to perform the action in the current popup");
-			ImGui::BulletText("Press X to change the value of something (like a slider)");
-			ImGui::BulletText("Use the d-pad to navigate the menus and change the sliders");
-			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
-			{
-				controller_navigation_help_open = false;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-		if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			// printf("about2!\n");
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			CenteredText("Trigger Control");
-			CenteredText(VERSION);
-			ImGui::Separator();
-			ImGui::Text("Made with FOSS, Powered by ImGui");
-			if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
-			{
-				popup_open = false;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-		if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			std::vector<std::string> options;
-			get_presets(options);
-			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if ((ImGui::Button("Load") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
-			{
-				load_preset(outReport, options[preset_index].c_str());
-				right_cur = get_index(static_cast<dualsense_modes>(outReport[11]));
-				left_cur = get_index(static_cast<dualsense_modes>(outReport[22]));
-				APPLY();
-				load_preset_open = false;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
-			{
-				load_preset_open = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
-
-		if (preset_exists)
-		{
-			ImGui::OpenPopup("Preset Exists");
-		}
-		if (ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(300, 180), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
-			if (ImGui::Button("Yes"))
-			{
-				save_preset(outReport, name);
-				save_preset_open = false;
-				ImGui::CloseCurrentPopup();
-				preset_exists = false;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("No"))
-			{
-				ImGui::CloseCurrentPopup();
-				preset_exists = false;
-				save_preset_open = true;
-			}
-
-			ImGui::EndPopup();
-		}
-
-		if (ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(340, 100), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			std::vector<std::string> options;
-			get_presets(options);
-			if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0')
-			{
-				auto is_name = [name](std::string a)
-				{
-					return strcmp(a.c_str(), name) == 0;
-				};
-				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
-				{
-					printf("Preset already exists!\n");
-					save_preset_open = false;
-					preset_exists = true;
-				}
-				else
-				{
-					save_preset(outReport, name);
-					save_preset_open = false;
-				}
-			}
-
-			if ((ImGui::Button("Save")) && name[0] != '\0')
-			{
-				auto is_name = [name](std::string a)
-				{
-					return strcmp(a.c_str(), name) == 0;
-				};
-				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
-				{
-					printf("Preset already exists!\n");
-					save_preset_open = false;
-					preset_exists = true;
-				}
-				else
-				{
-					save_preset(outReport, name);
-					save_preset_open = false;
-				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
-			{
-				save_preset_open = false;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
-		if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			std::vector<std::string> options;
-			get_presets(options);
-			ImGui::Text("You cannot undo this action!");
-			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-			if ((ImGui::Button("Delete!") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
-			{
-				std::filesystem::remove(std::string(CONFIG_PATH) + options[preset_index] + ".txt");
-				delete_preset_open = false;
-				preset_index = 0; // prevents blank selection
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
-			{
-				delete_preset_open = false;
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-
-		if (ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
-			ImGui::Checkbox("Dark Mode", (bool *)&config[0]);
-			if (config[0])
-			{
-				ImGui::StyleColorsDark();
 			}
 			else
 			{
-				ImGui::StyleColorsLight();
+				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Invalid Preset", window);
 			}
-			ImGui::Checkbox("Reset On Close", (bool *)&config[1]);
-			if (ImGui::Button("Close") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		}
+		// load_preset(outReport,);
+		fileDialog.ClearSelected();
+	const int num_tabs = 2;
+	bool left_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+	bool right_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+	if (left_shoulder && cur_tab > 0)
+	{
+		cur_tab--;
+	}
+	if (right_shoulder && cur_tab < num_tabs - 1)
+	{
+		cur_tab++;
+	}
+	if (ImGui::BeginTabBar("tabs"))
+	{
+		ImGuiTabItemFlags flags[num_tabs] = {ImGuiTabBarFlags_None};
+		if (left_shoulder || right_shoulder)
+		{
+			flags[cur_tab] |= ImGuiTabItemFlags_SetSelected;
+		}
+		if (ImGui::BeginTabItem("Trigger Control", nullptr, flags[0]))
+		{
+			if (ImGui::Button("Reset"))
 			{
-				options_open = false;
-				ImGui::CloseCurrentPopup();
+				memset(outReport, 0, 78);
+				outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+				outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+				apply_effect(handle, outReport);
+				left_cur = 0;
+				right_cur = 0;
+				outReport[11] = (uint8_t)0;
+				outReport[22] = (uint8_t)0;
 			}
 
-			ImGui::EndPopup();
+			ImGui::Text("Right Trigger:");
+			ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
+			uint8_t min = 0;
+			uint8_t max = UINT8_MAX;
+			outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
+#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
+			SLIDER("Right Start Intensity", &outReport[12]);
+			SLIDER("Right Effect Force", &outReport[13]);
+			SLIDER("Right Range Force", &outReport[14]);
+			SLIDER("Right Near Release Strength", &outReport[15]);
+			SLIDER("Right Near Middle Strength", &outReport[16]);
+			SLIDER("Right Pressed Strength", &outReport[17]);
+			SLIDER("Right Actuation Frequency", &outReport[20]);
+			ImGui::Text("Left Trigger:");
+			ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
+			outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
+			SLIDER("Left Start Resistance", &outReport[23]);
+			SLIDER("Left Effect Force", &outReport[24]);
+			SLIDER("Left Range Force", &outReport[25]);
+			SLIDER("Left Near Release Strength", &outReport[26]);
+			SLIDER("Left Near Middle Strength", &outReport[27]);
+			SLIDER("Left Pressed Strength", &outReport[28]);
+			SLIDER("Left Actuation Frequency", &outReport[30]);
+			if (ImGui::Button("Apply"))
+			{
+				APPLY();
+			}
+
+			ImGui::EndTabItem();
 		}
-		ImGui::End();
-		ImGui::Render();
-		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-		SDL_RenderPresent(renderer);
+		if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
+		{
+			ImGui::ColorPicker3("Light Color", light_colors);
+			ImGui::SliderInt("Player Number", &player, 1, 4);
+			if (ImGui::Button("Apply"))
+			{
+				SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
+				SDL_GameControllerSetPlayerIndex(handle, player - 1);
+			}
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
 	}
-	ImGui_ImplSDLRenderer_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
+	if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(510, 170), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		ImGui::BulletText("Press the left shoulder button to go back a tab.");
+		ImGui::BulletText("Press the right shoulder button to go forward a tab.");
+		ImGui::BulletText("Press O to close popups");
+		ImGui::BulletText("Press Δ to perform the action in the current popup");
+		ImGui::BulletText("Press X to change the value of something (like a slider)");
+		ImGui::BulletText("Use the d-pad to navigate the menus and change the sliders");
+		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			controller_navigation_help_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+	if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		// printf("about2!\n");
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		CenteredText("Trigger Control");
+		CenteredText(VERSION);
+		ImGui::Separator();
+		ImGui::Text("Made with FOSS, Powered by ImGui");
+		if (SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			popup_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+	if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		std::vector<std::string> options;
+		get_presets(options);
+		ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
+		if ((ImGui::Button("Load") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
+		{
+			load_preset(outReport, options[preset_index].c_str());
+			right_cur = get_index(static_cast<dualsense_modes>(outReport[11]));
+			left_cur = get_index(static_cast<dualsense_modes>(outReport[22]));
+			APPLY();
+			load_preset_open = false;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			load_preset_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (preset_exists)
+	{
+		ImGui::OpenPopup("Preset Exists");
+	}
+	if (ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(300, 180), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
+		if (ImGui::Button("Yes"))
+		{
+			save_preset(outReport, name);
+			save_preset_open = false;
+			ImGui::CloseCurrentPopup();
+			preset_exists = false;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("No"))
+		{
+			ImGui::CloseCurrentPopup();
+			preset_exists = false;
+			save_preset_open = true;
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(340, 100), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		std::vector<std::string> options;
+		get_presets(options);
+		if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0')
+		{
+			auto is_name = [name](std::string a)
+			{
+				return strcmp(a.c_str(), name) == 0;
+			};
+			if (std::find_if(options.begin(), options.end(), is_name) != options.end())
+			{
+				printf("Preset already exists!\n");
+				save_preset_open = false;
+				preset_exists = true;
+			}
+			else
+			{
+				save_preset(outReport, name);
+				save_preset_open = false;
+			}
+		}
+
+		if ((ImGui::Button("Save")) && name[0] != '\0')
+		{
+			auto is_name = [name](std::string a)
+			{
+				return strcmp(a.c_str(), name) == 0;
+			};
+			if (std::find_if(options.begin(), options.end(), is_name) != options.end())
+			{
+				printf("Preset already exists!\n");
+				save_preset_open = false;
+				preset_exists = true;
+			}
+			else
+			{
+				save_preset(outReport, name);
+				save_preset_open = false;
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			save_preset_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		std::vector<std::string> options;
+		get_presets(options);
+		ImGui::Text("You cannot undo this action!");
+		ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
+		if ((ImGui::Button("Delete!") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
+		{
+			std::filesystem::remove(std::string(CONFIG_PATH) + options[preset_index] + ".txt");
+			delete_preset_open = false;
+			preset_index = 0; // prevents blank selection
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			delete_preset_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if (ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+	{
+		ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
+		ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+		_pos.x -= ImGui::GetWindowWidth() / 2;
+		_pos.y -= ImGui::GetWindowHeight() / 2;
+		ImGui::SetWindowPos(_pos);
+		ImGui::Checkbox("Dark Mode", (bool *)&config[0]);
+		if (config[0])
+		{
+			ImGui::StyleColorsDark();
+		}
+		else
+		{
+			ImGui::StyleColorsLight();
+		}
+		ImGui::Checkbox("Reset On Close", (bool *)&config[1]);
+		if (ImGui::Button("Close") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_B))
+		{
+			options_open = false;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+	ImGui::End();
+	ImGui::Render();
+	ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+	SDL_RenderPresent(renderer);
+}
+ImGui_ImplSDLRenderer_Shutdown();
+ImGui_ImplSDL2_Shutdown();
+ImGui::DestroyContext();
+SDL_DestroyRenderer(renderer);
+SDL_DestroyWindow(window);
 
 #ifdef __linux__
-	Mix_CloseAudio();
-	Mix_Quit();
+Mix_CloseAudio();
+Mix_Quit();
 #endif
-	if (config[1])
-	{
-		memset(outReport, 0, 78);
-		outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-		outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-		apply_effect(handle, outReport);
-		left_cur = 0;
-		right_cur = 0;
-		outReport[11] = (uint8_t)0;
-		outReport[22] = (uint8_t)0;
-	}
-	SDL_GameControllerClose(handle);
-	delete[] outReport;
-	SDL_Quit();
-	if (std::filesystem::exists("imgui.ini"))
-		std::filesystem::remove("imgui.ini");
-	write_config(config, config_size);
-	// program termination should free memory I forgot to free :D
-	return 0;
+if (config[1])
+{
+	memset(outReport, 0, 78);
+	outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
+	outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
+	apply_effect(handle, outReport);
+	left_cur = 0;
+	right_cur = 0;
+	outReport[11] = (uint8_t)0;
+	outReport[22] = (uint8_t)0;
+}
+SDL_GameControllerClose(handle);
+delete[] outReport;
+SDL_Quit();
+if (std::filesystem::exists("imgui.ini"))
+	std::filesystem::remove("imgui.ini");
+write_config(config, config_size);
+// program termination should free memory I forgot to free :D
+return 0;
 }
