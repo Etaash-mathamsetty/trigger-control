@@ -544,13 +544,7 @@ int main(int argc, char **argv)
 		fileDialog.Display();
 		if (fileDialog.HasSelected())
 		{
-			#ifdef __linux__
-			std::string path = fileDialog.GetSelected().c_str();
-			#endif
-			#ifdef _WIN32
-			std::wstring _path = fileDialog.GetSelected().c_str();
-			std::string path(_path.begin(), _path.end());
-			#endif
+			std::string path = fileDialog.GetSelected().string();
 			std::string __name;
 #ifdef __linux__
 			__name = path.substr(path.find_last_of("/") + 1);

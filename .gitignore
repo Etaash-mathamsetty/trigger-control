@@ -1,3 +1,4 @@
 .vscode/
 *.o
 trigger-control
+trigger-control.exe
