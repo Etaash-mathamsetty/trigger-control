@@ -28,6 +28,9 @@
 #include <chrono>
 #include <thread>
 
+
+#define BIT(nr)			(1 << (nr))
+
 #if !SDL_VERSION_ATLEAST(2, 0, 14)
 #error SDL2 version 2.0.14 or higher is required
 #endif
@@ -232,7 +235,7 @@ void apply_effect(SDL_GameController *dev, uint8_t *outReport)
 		return;
 	outReport[0] = 0x2;
 	outReport[1] = 0x04 | 0x08;
-	outReport[2] = 0x40;
+	outReport[2] = 0x40 | BIT(4);
 	SDL_GameControllerSendEffect(dev, outReport + 1, 65);
 }
 
@@ -401,7 +404,7 @@ int main(int argc, char **argv)
 	memset(outReport, 0, 78);
 	outReport[0] = 0x2;
 	outReport[1] = 0x04 | 0x08;
-	outReport[2] = 0x40;
+	outReport[2] = 0x40 | BIT(4);
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
@@ -644,11 +647,17 @@ int main(int argc, char **argv)
 		if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
 		{
 			ImGui::ColorPicker3("Light Color", light_colors);
-			ImGui::SliderInt("Player Number", &player, 1, 4);
+			ImGui::SliderInt("Player Number", &player, 0, 4);
 			if (ImGui::Button("Apply"))
 			{
 				SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
+				if(player-1 >= 0)
 				SDL_GameControllerSetPlayerIndex(handle, player - 1);
+				else
+				{
+				outReport[44] = 0;
+				APPLY();
+				}
 			}
 			ImGui::EndTabItem();
 		}
