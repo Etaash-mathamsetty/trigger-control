@@ -333,6 +333,7 @@ int main(int argc, char **argv)
 	bool preset_exists = false;
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
+	bool export_preset = false;
 	// bool preset_load_exists = false;
 	char name[100];
 	IMGUI_CHECKVERSION();
@@ -412,9 +413,10 @@ int main(int argc, char **argv)
 	int player = 1;
 	int cur_tab = 0;
 	ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_NoTitleBar);
+	ImGui::FileBrowser fileDialog2(ImGuiFileBrowserFlags_NoTitleBar | ImGuiFileBrowserFlags_SelectDirectory);
 	fileDialog.SetTitle("Choose Preset");
 	fileDialog.SetTypeFilters({".txt"});
-
+	fileDialog2.SetTitle("Where do you want to export the preset?");
 	while (running)
 	{
 
@@ -479,6 +481,11 @@ int main(int argc, char **argv)
 				if (ImGui::MenuItem("Load Preset from File"))
 				{
 					fileDialog.Open();
+					memset(name, 0, sizeof(name));
+				}
+				if(ImGui::MenuItem("Export Preset"))
+				{
+					fileDialog2.Open();
 					memset(name, 0, sizeof(name));
 				}
 				if (ImGui::MenuItem("Save Preset"))
@@ -572,9 +579,34 @@ int main(int argc, char **argv)
 			{
 				SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "Invalid Preset", window);
 			}
+			fileDialog.ClearSelected();
+		}
+		fileDialog2.Display();
+		if (fileDialog2.HasSelected())
+		{
+			export_preset = true;
+		}
+		if (export_preset)
+		{
+			ImGui::OpenPopup("Export Preset");
+		}
+		if(ImGui::BeginPopup("Export Preset", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+				std::vector<std::string> options;
+				get_presets(options);
+				ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
+				if(ImGui::Button("Export")){
+					std::string path = fileDialog2.GetSelected().string();
+					if(std::filesystem::exists(path + options[preset_index] + ".txt")){
+						std::filesystem::remove(path + options[preset_index] + ".txt");
+					}
+					std::filesystem::copy(CONFIG_PATH + options[preset_index] + ".txt", path);
+					export_preset = false;
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			fileDialog2.ClearSelected();
 		}
 		// load_preset(outReport,);
-		fileDialog.ClearSelected();
 		const int num_tabs = 2;
 		bool left_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
 		bool right_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
