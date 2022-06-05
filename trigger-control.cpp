@@ -652,11 +652,11 @@ int main(int argc, char **argv)
 			{
 				SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
 				if(player-1 >= 0)
-				SDL_GameControllerSetPlayerIndex(handle, player - 1);
+					SDL_GameControllerSetPlayerIndex(handle, player - 1);
 				else
 				{
-				outReport[44] = 0;
-				APPLY();
+					outReport[44] = 0;
+					APPLY();
 				}
 			}
 			ImGui::EndTabItem();
