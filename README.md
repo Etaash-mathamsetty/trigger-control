@@ -55,7 +55,7 @@ yay -S mingw-w64-pkg-config mingw-w64-sdl2
 ```
 then run,  
 ```
-./windows-compile.sh
+make windows
 ```
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
 `libwinpthread-1.dll`  
