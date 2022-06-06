@@ -7,7 +7,7 @@ Dark Mode           |  Light Mode
 a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui,  
 works through bluetooth and usb.
 
-requirments:  
+requirements:  
 c++17 compiler   
 
 required libraries:  
@@ -55,7 +55,7 @@ sudo cp trigger-control /usr/bin
 
 **Cross Compile for Windows**  
 I recommend arch linux for this, but you can try your luck with any other distro  
-first, clone the repo, then run the following commands(with any AUR helper)  
+first, clone the repo, then run the following commands (with any AUR helper)  
 ```
 yay -S mingw-w64-pkg-config mingw-w64-sdl2 
 ```
