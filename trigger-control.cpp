@@ -127,10 +127,12 @@ void CenteredText(const char *text)
 void error_sound()
 {
 #ifdef __linux__
-	g_autofree gchar *name = g_build_filename(g_get_user_data_dir(), "sounds", "__custom", NULL);
+	//unfortunately this is not going to work on anything other than gnome
+	/*g_autofree gchar *name = g_build_filename(g_get_user_data_dir(), "sounds", "__custom", NULL);
 	g_autofree gchar *path = g_build_filename(name, "bell-terminal.ogg", NULL);
 	Mix_Chunk *sound = Mix_LoadWAV((const char *)path);
-	Mix_PlayChannel(-1, sound, 0);
+	Mix_PlayChannel(-1, sound, 0);*/
+	std::cout << '\a' << std::endl;
 #endif
 #ifdef _WIN32
 	MessageBeep(MB_ICONERROR);
