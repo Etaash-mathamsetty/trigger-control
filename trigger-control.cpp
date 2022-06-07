@@ -9,8 +9,8 @@
 #include "imgui/imfilebrowser.h"
 #include "icon.h"
 #ifdef __linux__
-#include <glib-2.0/glib.h>
 #include <SDL2/SDL_mixer.h>
+#include <linux/limits.h>
 #endif
 #ifdef _WIN32
 #include <windows.h>
