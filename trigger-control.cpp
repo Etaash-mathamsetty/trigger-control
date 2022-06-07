@@ -795,11 +795,11 @@ int main(int argc, char **argv)
 			ImGui::SetWindowPos(_pos);
 			std::vector<std::string> options;
 			get_presets(options);
-			if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && name[0] != '\0')
+			if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && strlen(name) > 0)
 			{
 				auto is_name = [name](std::string a)
 				{
-					return strcmp(a.c_str(), name) == 0;
+					return a == name;
 				};
 				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
 				{
@@ -814,11 +814,11 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if ((ImGui::Button("Save")) && name[0] != '\0')
+			if ((ImGui::Button("Save")) && strlen(name) > 0)
 			{
 				auto is_name = [name](std::string a)
 				{
-					return strcmp(a.c_str(), name) == 0;
+					return a == name;
 				};
 				if (std::find_if(options.begin(), options.end(), is_name) != options.end())
 				{
