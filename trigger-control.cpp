@@ -9,7 +9,6 @@
 #include "imgui/imfilebrowser.h"
 #include "icon.h"
 #ifdef __linux__
-#include <SDL2/SDL_mixer.h>
 #include <linux/limits.h>
 #endif
 #ifdef _WIN32
@@ -59,8 +58,7 @@ void create_config_path_dir()
 #endif
 #ifdef _WIN32
 	// lmao windows with the wide char paths
-	std::wstring wc(strlen(CONFIG_PATH), L'#');
-	mbstowcs(&wc[0], CONFIG_PATH, strlen(CONFIG_PATH));
+	std::wstring wc(std::string(CONFIG_PATH).begin(), std::string(CONFIG_PATH).end());
 	if (!std::filesystem::is_directory(wc))
 		std::filesystem::create_directory(wc);
 #endif
@@ -319,14 +317,6 @@ int main(int argc, char **argv)
 	surface = SDL_CreateRGBSurfaceWithFormatFrom(gimp_image.pixel_data, gimp_image.width, gimp_image.height, gimp_image.bytes_per_pixel * 8, 4 * gimp_image.width, SDL_PIXELFORMAT_RGBA32);
 	SDL_SetWindowIcon(window, surface);
 	SDL_FreeSurface(surface);
-#ifdef __linux__
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-	{
-		// error_sound(); lmao cannot play the sound without mixer
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", "could not initialize sdl_mixer", window);
-		exit(EXIT_FAILURE);
-	}
-#endif
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	bool popup_open = false;
 	bool save_preset_open = false;
@@ -903,11 +893,6 @@ int main(int argc, char **argv)
 	ImGui::DestroyContext();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
-
-#ifdef __linux__
-	Mix_CloseAudio();
-	Mix_Quit();
-#endif
 	if (config[1])
 	{
 		memset(outReport, 0, 78);
