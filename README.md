@@ -3,7 +3,7 @@ Dark Mode           |  Light Mode
 :-------------------------:|:-------------------------:
 ![image](https://user-images.githubusercontent.com/45927311/166091284-a06013df-f443-48a1-8e15-514690b43200.png) | ![image](https://user-images.githubusercontent.com/45927311/166091275-4f970e14-5a16-4f1e-b96b-4e823cdcfcae.png)
 
-IF YOU ARE USING DS4WINDOWS:  
+**IF YOU ARE USING DS4WINDOWS:**  
 Download this version, later versions have trigger effects which will overwrite the ones made by this app
 https://github.com/Ryochan7/DS4Windows/releases/tag/v2.2.2  
 
