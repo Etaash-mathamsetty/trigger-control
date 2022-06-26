@@ -8,8 +8,7 @@ Download this version, later versions have trigger effects which will overwrite 
 https://github.com/Ryochan7/DS4Windows/releases/tag/v2.2.2  
 
 
-a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui,  
-works through bluetooth and usb.
+Trigger Control is a quick and dirty project that allows you to control the adaptive triggers of the dualsense controller on linux and windows using a gui, works through bluetooth and usb.
 
 requirements:  
 c++17 compiler   
