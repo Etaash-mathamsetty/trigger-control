@@ -14,11 +14,11 @@ requirements:
 c++17 compiler   
 
 required libraries:  
-libSDL2  
+libSDL2 >= 2.0.14 
     
 
 optional:  
-SDL2 >= 2.0.22 (for wayland)  
+libSDL2 >= 2.0.22 (for wayland)  
 libdecor (for wayland)  
 ttf-dejavu (better font)  
 
