@@ -320,9 +320,9 @@ int main(int argc, char **argv)
 	printf("dpi scaling: %f\n", dpi_scaling);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	SDL_RenderSetScale(renderer, dpi_scaling, dpi_scaling);
-	float x,y,z;
-	SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window),&x,&y,&z);
-	std::cout << "dpi: " << x << "," << y <<  "," << z << std::endl;
+	//float x,y,z;
+	//SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window),&x,&y,&z);
+	//std::cout << "dpi: " << x << "," << y <<  "," << z << std::endl;
 #ifdef _WIN32
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
@@ -633,7 +633,6 @@ int main(int argc, char **argv)
 			}
 			ImGui::EndTabBar();
 		}
-		char mapping[8][3] = {{'A','B','C'},{'D','E','F'},{'G','H','I'},{'J','K','L'},{'M','N','O'},{'P','R','S'}, {'T','U','V'}, {'W','X','Y'}};
 		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(510, 170), ImGuiCond_Always);
