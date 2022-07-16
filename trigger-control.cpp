@@ -26,29 +26,17 @@
 #include <codecvt>
 #include <chrono>
 #include <thread>
-
-#define BIT(nr) (1 << (nr))
+#include "libtrigger-control/ds-trigger-control.h"
+using namespace triggercontrol;
 
 #if !SDL_VERSION_ATLEAST(2, 0, 14)
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
+
+
 const char *VERSION = "Version 1.5";
 char *CONFIG_PATH = new char[PATH_MAX];
-
-enum class dualsense_modes
-{
-	Off = 0x0,	 // no resistance
-	Rigid = 0x1, // continous resistance
-	Pulse = 0x2, // section resistance
-	Rigid_A = 0x1 | 0x20,
-	Rigid_B = 0x1 | 0x04,
-	Rigid_AB = 0x1 | 0x20 | 0x04,
-	Pulse_A = 0x2 | 0x20,
-	Pulse_B = 0x2 | 0x04,
-	Pulse_AB = 0x2 | 0x20 | 0x04,
-	INVALID = 0xFFFF
-};
 
 void create_config_path_dir()
 {
@@ -64,7 +52,7 @@ void create_config_path_dir()
 #endif
 }
 
-void load_preset(uint8_t *outReport, const char *name)
+void load_preset(uint8_t *rightEffects, uint8_t *leftEffects, const char *name)
 {
 	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH);
@@ -73,12 +61,13 @@ void load_preset(uint8_t *outReport, const char *name)
 	FILE *f = fopen(path.c_str(), "rb");
 	if (f)
 	{
-		fread(outReport + 11, sizeof(*outReport), 30 - 10, f);
+		fread(rightEffects, sizeof(*rightEffects), 7, f);
+		fread(leftEffects, sizeof(*leftEffects), 7, f);
 		fclose(f);
 	}
 }
 
-void save_preset(const uint8_t *outReport, const char *name)
+void save_preset(const uint8_t *rightEffects,const uint8_t *leftEffects, const char *name)
 {
 	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
@@ -86,7 +75,8 @@ void save_preset(const uint8_t *outReport, const char *name)
 	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
-	fwrite(outReport + 11, sizeof(*outReport), 30 - 10, f);
+	fwrite(rightEffects, sizeof(*rightEffects),7, f);
+	fwrite(leftEffects, sizeof(*leftEffects),7, f);
 	fclose(f);
 }
 
@@ -137,82 +127,55 @@ void error_sound()
 #endif
 }
 
-// I spent so long realizing that it was copying the pointer instead of modifying the pointer's address :/
-int find_dev(SDL_GameController **handle)
-{
-	if (SDL_NumJoysticks() < 1)
-		return -1;
-
-	for (int i = 0; i < SDL_NumJoysticks(); i++)
-	{
-		if (SDL_IsGameController(i))
-		{
-			*handle = SDL_GameControllerOpen(i);
-			if (*handle)
-			{
-				if (SDL_GameControllerGetType(*handle) == SDL_CONTROLLER_TYPE_PS5)
-				{
-					return 0;
-				}
-			}
-			else
-			{
-				SDL_GameControllerClose(*handle);
-			}
-		}
-	}
-	return -1;
-}
-
-dualsense_modes get_mode(int index)
+ds::modes get_mode(int index)
 {
 	switch (index)
 	{
 	case 0:
-		return dualsense_modes::Off;
+		return ds::modes::Off;
 	case 1:
-		return dualsense_modes::Rigid;
+		return ds::modes::Rigid;
 	case 2:
-		return dualsense_modes::Pulse;
+		return ds::modes::Pulse;
 	case 3:
-		return dualsense_modes::Rigid_A;
+		return ds::modes::Rigid_A;
 	case 4:
-		return dualsense_modes::Rigid_B;
+		return ds::modes::Rigid_B;
 	case 5:
-		return dualsense_modes::Rigid_AB;
+		return ds::modes::Rigid_AB;
 	case 6:
-		return dualsense_modes::Pulse_A;
+		return ds::modes::Pulse_A;
 	case 7:
-		return dualsense_modes::Pulse_B;
+		return ds::modes::Pulse_B;
 	case 8:
-		return dualsense_modes::Pulse_AB;
+		return ds::modes::Pulse_AB;
 	default:
 		break;
 	}
-	return dualsense_modes::INVALID;
+	return ds::modes::INVALID;
 }
 
-int get_index(dualsense_modes mode)
+int get_index(ds::modes mode)
 {
 	switch (mode)
 	{
-	case dualsense_modes::Off:
+	case ds::modes::Off:
 		return 0;
-	case dualsense_modes::Rigid:
+	case ds::modes::Rigid:
 		return 1;
-	case dualsense_modes::Pulse:
+	case ds::modes::Pulse:
 		return 2;
-	case dualsense_modes::Rigid_A:
+	case ds::modes::Rigid_A:
 		return 3;
-	case dualsense_modes::Rigid_B:
+	case ds::modes::Rigid_B:
 		return 4;
-	case dualsense_modes::Rigid_AB:
+	case ds::modes::Rigid_AB:
 		return 5;
-	case dualsense_modes::Pulse_A:
+	case ds::modes::Pulse_A:
 		return 6;
-	case dualsense_modes::Pulse_B:
+	case ds::modes::Pulse_B:
 		return 7;
-	case dualsense_modes::Pulse_AB:
+	case ds::modes::Pulse_AB:
 		return 8;
 	default:
 		break;
@@ -226,16 +189,6 @@ bool VectorOfStringGetter(void *data, int n, const char **out_text)
 	const std::vector<std::string> &v = *(std::vector<std::string> *)data;
 	*out_text = v[n].c_str();
 	return true;
-}
-
-void apply_effect(SDL_GameController *dev, uint8_t *outReport)
-{
-	if (!dev)
-		return;
-	outReport[0] = 0x2;
-	outReport[1] = 0x04 | 0x08;
-	outReport[2] = 0x40 | BIT(4);
-	SDL_GameControllerSendEffect(dev, outReport + 1, 65);
 }
 
 void get_presets(std::vector<std::string> &options)
@@ -283,6 +236,13 @@ bool check_valid(std::string path)
 	return true;
 }
 
+void center_window(){		
+	ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
+	_pos.x -= ImGui::GetWindowWidth() / 2; 
+	_pos.y -= ImGui::GetWindowHeight() / 2; 
+	ImGui::SetWindowPos(_pos);
+}
+
 int main(int argc, char **argv)
 {
 	memset(CONFIG_PATH, 0, PATH_MAX);
@@ -306,6 +266,7 @@ int main(int argc, char **argv)
 #endif
 #endif
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED, "1");
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 620, WindowFlags);
@@ -359,6 +320,9 @@ int main(int argc, char **argv)
 	printf("dpi scaling: %f\n", dpi_scaling);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	SDL_RenderSetScale(renderer, dpi_scaling, dpi_scaling);
+	float x,y,z;
+	SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window),&x,&y,&z);
+	std::cout << "dpi: " << x << "," << y <<  "," << z << std::endl;
 #ifdef _WIN32
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
@@ -383,7 +347,7 @@ int main(int argc, char **argv)
 #endif
 	int preset_index = 0;
 	SDL_GameController *handle;
-	int res = find_dev(&handle);
+	int res = ds::find(&handle);
 	if (res == -1)
 	{
 		error_sound();
@@ -392,11 +356,10 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 	bool running = true;
-	uint8_t *outReport = new uint8_t[78];
-	memset(outReport, 0, 78);
-	outReport[0] = 0x2;
-	outReport[1] = 0x04 | 0x08;
-	outReport[2] = 0x40 | BIT(4);
+	uint8_t leftEffects[7] = {0};
+	ds::modes leftMode = ds::modes::Off;
+	uint8_t rightEffects[7] = {0};
+	ds::modes rightMode = ds::modes::Off;
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
@@ -409,6 +372,7 @@ int main(int argc, char **argv)
 	fileDialog.SetTitle("Choose Preset");
 	fileDialog.SetTypeFilters({".txt"});
 	fileDialog2.SetTitle("Where do you want to export the preset?");
+	
 	while (running)
 	{
 
@@ -426,19 +390,16 @@ int main(int argc, char **argv)
 			}
 		}
 #define APPLY()                                                 \
-	outReport[11] = (uint8_t)dualsense_modes::Rigid_B;          \
-	outReport[22] = (uint8_t)dualsense_modes::Rigid_B;          \
-	apply_effect(handle, outReport);                            \
+	ds::reset_all(handle); \
 	std::this_thread::sleep_for(std::chrono::milliseconds(70)); \
-	outReport[11] = (uint8_t)get_mode(right_cur);               \
-	outReport[22] = (uint8_t)get_mode(left_cur);                \
-	apply_effect(handle, outReport)
+	ds::apply_effect(handle, ds::triggers::left, leftMode, leftEffects); \
+	ds::apply_effect(handle, ds::triggers::right, rightMode, rightEffects)
 
 		if (SDL_GameControllerGetAttached(handle) == SDL_FALSE)
 		{
-			std::this_thread::sleep_for(std::chrono::seconds(1));
+			std::this_thread::sleep_for(std::chrono::seconds(2));
 			SDL_GameControllerClose(handle);
-			int res = find_dev(&handle);
+			int res = ds::find(&handle);
 			if (res == -1)
 			{
 				error_sound();
@@ -559,7 +520,7 @@ int main(int argc, char **argv)
 				if (std::find(options.begin(), options.end(), __name) == options.end())
 				{
 					std::filesystem::copy(path, CONFIG_PATH);
-					load_preset(outReport, __name.c_str());
+					load_preset(rightEffects,leftEffects, __name.c_str());
 					APPLY();
 				}
 				else
@@ -621,39 +582,37 @@ int main(int argc, char **argv)
 			{
 				if (ImGui::Button("Reset"))
 				{
-					memset(outReport, 0, 78);
-					outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-					outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-					apply_effect(handle, outReport);
+					memset(leftEffects, 0, 7);
+					memset(rightEffects, 0, 7);
+					ds::reset_all(handle);
 					left_cur = 0;
 					right_cur = 0;
-					outReport[11] = (uint8_t)0;
-					outReport[22] = (uint8_t)0;
+					rightMode = ds::modes::Off;
+					leftMode = ds::modes::Off;
 				}
-
+				const uint8_t min = 0;
+				const uint8_t max = UINT8_MAX;
+#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
 				ImGui::Text("Right Trigger:");
 				ImGui::Combo("Right Mode", &right_cur, states, IM_ARRAYSIZE(states));
-				uint8_t min = 0;
-				uint8_t max = UINT8_MAX;
-				outReport[11] = static_cast<uint8_t>(get_mode(right_cur));
-#define SLIDER(str, ptr) ImGui::SliderScalar(str, ImGuiDataType_U8, ptr, &min, &max, "%d")
-				SLIDER("Right Start Intensity", &outReport[12]);
-				SLIDER("Right Effect Force", &outReport[13]);
-				SLIDER("Right Range Force", &outReport[14]);
-				SLIDER("Right Near Release Strength", &outReport[15]);
-				SLIDER("Right Near Middle Strength", &outReport[16]);
-				SLIDER("Right Pressed Strength", &outReport[17]);
-				SLIDER("Right Actuation Frequency", &outReport[20]);
+				rightMode = get_mode(right_cur);
+				SLIDER("Right Start Intensity", &rightEffects[0]);
+				SLIDER("Right Effect Force", &rightEffects[1]);
+				SLIDER("Right Range Force", &rightEffects[2]);
+				SLIDER("Right Near Release Strength", &rightEffects[3]);
+				SLIDER("Right Near Middle Strength", &rightEffects[4]);
+				SLIDER("Right Pressed Strength", &rightEffects[5]);
+				SLIDER("Right Actuation Frequency", &rightEffects[6]);
 				ImGui::Text("Left Trigger:");
 				ImGui::Combo("Left Mode", &left_cur, states, IM_ARRAYSIZE(states));
-				outReport[22] = static_cast<uint8_t>(get_mode(left_cur));
-				SLIDER("Left Start Resistance", &outReport[23]);
-				SLIDER("Left Effect Force", &outReport[24]);
-				SLIDER("Left Range Force", &outReport[25]);
-				SLIDER("Left Near Release Strength", &outReport[26]);
-				SLIDER("Left Near Middle Strength", &outReport[27]);
-				SLIDER("Left Pressed Strength", &outReport[28]);
-				SLIDER("Left Actuation Frequency", &outReport[30]);
+				leftMode = get_mode(left_cur);
+				SLIDER("Left Start Resistance", &leftEffects[0]);
+				SLIDER("Left Effect Force", &leftEffects[1]);
+				SLIDER("Left Range Force", &leftEffects[2]);
+				SLIDER("Left Near Release Strength", &leftEffects[3]);
+				SLIDER("Left Near Middle Strength", &leftEffects[4]);
+				SLIDER("Left Pressed Strength", &leftEffects[5]);
+				SLIDER("Left Actuation Frequency", &leftEffects[6]);
 				if (ImGui::Button("Apply"))
 				{
 					APPLY();
@@ -664,29 +623,21 @@ int main(int argc, char **argv)
 			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
 			{
 				ImGui::ColorPicker3("Light Color", light_colors);
-				ImGui::SliderInt("Player Number", &player, 0, 4);
+				ImGui::SliderInt("Player Number", &player, 1, 4);
 				if (ImGui::Button("Apply"))
 				{
 					SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
-					if (player - 1 >= 0)
-						SDL_GameControllerSetPlayerIndex(handle, player - 1);
-					else
-					{
-						outReport[44] = 0;
-						APPLY();
-					}
+					SDL_GameControllerSetPlayerIndex(handle, 0);
 				}
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
 		}
+		char mapping[8][3] = {{'A','B','C'},{'D','E','F'},{'G','H','I'},{'J','K','L'},{'M','N','O'},{'P','R','S'}, {'T','U','V'}, {'W','X','Y'}};
 		if (ImGui::BeginPopupModal("Controller Navigation Help", &controller_navigation_help_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(510, 170), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			ImGui::BulletText("Press the left shoulder button to go back a tab.");
 			ImGui::BulletText("Press the right shoulder button to go forward a tab.");
 			ImGui::BulletText("Press O to close popups");
@@ -702,11 +653,7 @@ int main(int argc, char **argv)
 		}
 		if (ImGui::BeginPopupModal("About", &popup_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
-			// printf("about2!\n");
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			CenteredText("Trigger Control");
 			CenteredText(VERSION);
 			ImGui::Separator();
@@ -721,18 +668,15 @@ int main(int argc, char **argv)
 		if (ImGui::BeginPopupModal("Load Preset", &load_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(300, 100), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			std::vector<std::string> options;
 			get_presets(options);
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if ((ImGui::Button("Load") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
 			{
-				load_preset(outReport, options[preset_index].c_str());
-				right_cur = get_index(static_cast<dualsense_modes>(outReport[11]));
-				left_cur = get_index(static_cast<dualsense_modes>(outReport[22]));
+				load_preset(rightEffects,leftEffects, options[preset_index].c_str());
+				right_cur = get_index(rightMode);
+				left_cur = get_index(leftMode);
 				APPLY();
 				load_preset_open = false;
 			}
@@ -753,14 +697,11 @@ int main(int argc, char **argv)
 		if (ImGui::BeginPopup("Preset Exists", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(300, 180), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
 			if (ImGui::Button("Yes"))
 			{
-				save_preset(outReport, name);
+				save_preset(rightEffects,leftEffects, name);
 				save_preset_open = false;
 				ImGui::CloseCurrentPopup();
 				preset_exists = false;
@@ -779,10 +720,7 @@ int main(int argc, char **argv)
 		if (ImGui::BeginPopupModal("Save Preset", &save_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(340, 100), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			std::vector<std::string> options;
 			get_presets(options);
 			if (ImGui::InputTextWithHint("Preset Name", "Name", name, IM_ARRAYSIZE(name), ImGuiInputTextFlags_EnterReturnsTrue) && strlen(name) > 0)
@@ -799,7 +737,7 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					save_preset(outReport, name);
+					save_preset(rightEffects, leftEffects, name);
 					save_preset_open = false;
 				}
 			}
@@ -818,7 +756,7 @@ int main(int argc, char **argv)
 				}
 				else
 				{
-					save_preset(outReport, name);
+					save_preset(rightEffects, leftEffects, name);
 					save_preset_open = false;
 				}
 			}
@@ -834,10 +772,7 @@ int main(int argc, char **argv)
 		if (ImGui::BeginPopupModal("Delete Preset", &delete_preset_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			std::vector<std::string> options;
 			get_presets(options);
 			ImGui::Text("You cannot undo this action!");
@@ -861,10 +796,7 @@ int main(int argc, char **argv)
 		if (ImGui::BeginPopupModal("Options", &options_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
 		{
 			ImGui::SetWindowSize(ImVec2(300, 120), ImGuiCond_Always);
-			ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-			_pos.x -= ImGui::GetWindowWidth() / 2;
-			_pos.y -= ImGui::GetWindowHeight() / 2;
-			ImGui::SetWindowPos(_pos);
+			center_window();
 			ImGui::Checkbox("Dark Mode", (bool *)&config[0]);
 			if (config[0])
 			{
@@ -895,17 +827,9 @@ int main(int argc, char **argv)
 	SDL_DestroyWindow(window);
 	if (config[1])
 	{
-		memset(outReport, 0, 78);
-		outReport[11] = (uint8_t)dualsense_modes::Rigid_B;
-		outReport[22] = (uint8_t)dualsense_modes::Rigid_B;
-		apply_effect(handle, outReport);
-		left_cur = 0;
-		right_cur = 0;
-		outReport[11] = (uint8_t)0;
-		outReport[22] = (uint8_t)0;
+		ds::reset_all(handle);
 	}
 	SDL_GameControllerClose(handle);
-	delete[] outReport;
 	SDL_Quit();
 	if (std::filesystem::exists("imgui.ini"))
 		std::filesystem::remove("imgui.ini");

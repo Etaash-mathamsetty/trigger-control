@@ -1,8 +1,9 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-OBJS = trigger-control.o imgui/imgui.o imgui/imgui_impl_sdlrenderer.o imgui/imgui_impl_sdl.o imgui/imgui_demo.o imgui/imgui_impl_win32.o imgui/imgui_draw.o imgui/imgui_tables.o imgui/imgui_widgets.o
-LIBRARIES = `pkg-config --libs --cflags sdl2` 
-CFLAGS = -Wall -std=c++17  
+OBJS = trigger-control.o imgui/imgui.o imgui/imgui_impl_sdlrenderer.o imgui/imgui_impl_sdl.o imgui/imgui_demo.o imgui/imgui_impl_win32.o imgui/imgui_draw.o imgui/imgui_tables.o imgui/imgui_widgets.o libtrigger-control/ds-trigger-control.o
+LIBRARIES = `pkg-config --libs --cflags sdl2`
+CFLAGS = -Wall -std=c++17
+
 
 all:	run
 
@@ -32,4 +33,4 @@ trigger-control:	$(OBJS)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $<
 
 clean:
-	rm -fr trigger-control trigger-control.exe imgui/imgui_impl_win32.o  $(OBJS)
+	rm -fr trigger-control trigger-control.exe $(OBJS)
