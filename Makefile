@@ -7,10 +7,10 @@ CFLAGS = -Wall -std=c++17
 
 all:	run
 
-run:		CFLAGS += -O2
+run:		CFLAGS += -O2 -Wall
 run:		trigger-control
 
-debug:	CFLAGS += -DDEBUG -g
+debug:	CFLAGS += -DDEBUG -g -Wall
 debug: 	trigger-control
 
 windows: CROSS=x86_64-w64-mingw32
