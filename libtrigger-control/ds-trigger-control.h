@@ -40,7 +40,7 @@ int find(SDL_GameController **handle);
 //pass in a SDL_GameController* ptr to a ps5 controller
 //pass in which trigger (left or right)
 //pass in the trigger mode
-//pass in an array of 7 uint8_ts to the different parameters for each mode
+//pass in an array of 7 uint8_ts to change the different parameters for each mode
 int apply_effect(SDL_GameController* handle, triggercontrol::ds::triggers trigger, triggercontrol::ds::modes mode, uint8_t effects[7]);
 
 //pass in a SDL_GameController* ptr to a ps5 controller
