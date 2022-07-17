@@ -7,8 +7,8 @@ CFLAGS = -Wall -std=c++17
 
 all:	run
 
-run:		CFLAGS += -O2 -Wall
-run:		trigger-control
+run:	CFLAGS += -O2 -Wall
+run:	trigger-control
 
 debug:	CFLAGS += -DDEBUG -g -Wall
 debug: 	trigger-control
