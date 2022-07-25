@@ -18,16 +18,30 @@ jobs:
         run: sudo apt install -y libsdl2-dev
       - name: Build on Linux
         run: make -j$(nproc)
+      - name: Upload linux binary
+        uses: actions/upload-artifact@v2
+        with:
+            name: amd64-binary
+            path: trigger-control
+            retention-days: 14
   build-win:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install deps
-        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget && sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget zip && sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
       - name: Get SDL2 devel mingw
         run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz
       - name: Install SDL2
         run: sudo mkdir /usr/local/{i686,x86_64}-w64-mingw32 && cd SDL2-2.0.22 && sudo make cross
       - name: Build Windows Version
         run: make windows -j$(nproc)
+      - name: Make zip with all dlls
+        run: mkdir trigger-control && cd trigger-control && sudo cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll  $(pwd) && sudo cp /usr/x86_64-w64-mingw32/bin/SDL2.dll  $(pwd)  && sudo cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll   $(pwd)  && sudo cp /usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll $(pwd) && cp ../trigger-control.exe $(pwd) && zip trigger-control.zip *
+      - name: Upload EXE
+        uses: actions/upload-artifact@v2
+        with:
+            name: win-portable
+            path: trigger-control/trigger-control.zip
+
