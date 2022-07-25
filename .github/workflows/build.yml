@@ -9,21 +9,19 @@ on:
       - main
 
 jobs:
-  build-amd64:
+  build-linux:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Install Deps
+      - name: Install deps
         run: sudo apt install -y libsdl2-dev
-      - name: Build on amd64
+      - name: Build on Linux
         run: make -j$(nproc)
   build-win:
-    runs-on: ubuntu-22.04
+    runs-on: arch-linux
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Intall Deps
-        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools
-      - name: Build windows version
+      - name: Build Windows Version
         run: make windows -j$(nproc)
