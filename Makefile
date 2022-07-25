@@ -23,7 +23,7 @@ LDFLAGS = $(LIBRARIES)
 
 
 trigger-control:	$(OBJS)
-	$(CXX) -o $@ $^  $(LDFLAGS) 
+	$(CXX) -o $@ $^  $(LDFLAGS)
 	$(EXTRA_CMDS)
 
 %.o:	%.cpp

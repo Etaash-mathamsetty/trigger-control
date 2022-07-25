@@ -70,9 +70,7 @@ make windows
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
 ```
 libwinpthread-1.dll  
-SDL2.dll  
-libstdc++-6.dll  
-libgcc_s_seh-1.dll  
+SDL2.dll
 ```
 from  
 ```
