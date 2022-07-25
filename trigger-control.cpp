@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <assert.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"

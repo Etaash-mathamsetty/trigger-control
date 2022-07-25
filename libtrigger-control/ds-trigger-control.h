@@ -1,4 +1,4 @@
-#include <SDL2/SDL_gamecontroller.h>
+#include <SDL_gamecontroller.h>
 #include <inttypes.h>
 
 // you can include this file (along with the cpp file) in your SDL2 project to control the dualsense triggers
