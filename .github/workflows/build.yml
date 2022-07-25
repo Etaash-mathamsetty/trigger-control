@@ -37,11 +37,9 @@ jobs:
         run: sudo mkdir /usr/local/{i686,x86_64}-w64-mingw32 && cd SDL2-2.0.22 && sudo make cross
       - name: Build Windows Version
         run: make windows -j$(nproc)
-      - name: Make zip with all dlls
-        run: mkdir trigger-control && cd trigger-control && sudo cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll  $(pwd) && sudo cp /usr/x86_64-w64-mingw32/bin/SDL2.dll  $(pwd)  && sudo cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll   $(pwd)  && sudo cp /usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll $(pwd) && cp ../trigger-control.exe $(pwd) && zip trigger-control.zip *
       - name: Upload EXE
         uses: actions/upload-artifact@v2
         with:
             name: win-portable
-            path: trigger-control/trigger-control.zip
+            path: trigger-control.exe
 

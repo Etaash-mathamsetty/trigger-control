@@ -14,7 +14,7 @@ debug:	CFLAGS += -DDEBUG -g -Wall
 debug: 	trigger-control
 
 windows: CROSS=x86_64-w64-mingw32
-windows: LIBRARIES = -lmingw32 -lopengl32 -luuid -lgdi32 -lcomdlg32 -ldwmapi `$(CROSS)-pkg-config --libs --cflags sdl2`
+windows: LIBRARIES = -lmingw32 -lopengl32 -luuid -lgdi32 -lcomdlg32 -ldwmapi -static-libstdc++ -static-libgcc `$(CROSS)-pkg-config --libs --cflags sdl2`
 windows: CXX=$(CROSS)-g++
 windows: CC=$(CROSS)-gcc
 windows: trigger-control
