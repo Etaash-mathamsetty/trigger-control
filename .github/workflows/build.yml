@@ -29,5 +29,7 @@ jobs:
         run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz
       - name: Install SDL2
         run: sudo mkdir /usr/local/{i686,x86_64}-w64-mingw32 && cd SDL2-2.0.22 && sudo make cross
+      - name: check if everything is ok
+        run: x86_64-w64-mingw32-pkg-config --libs --cflags sdl2
       - name: Build Windows Version
         run: make windows -j$(nproc)
