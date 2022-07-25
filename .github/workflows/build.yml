@@ -18,3 +18,12 @@ jobs:
         run: sudo apt install -y libsdl2-dev
       - name: Build on amd64
         run: make -j$(nproc)
+  build-win:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Intall Deps
+        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools
+      - name: Build windows version
+        run: make windows -j$(nproc)
