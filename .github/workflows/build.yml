@@ -28,6 +28,6 @@ jobs:
       - name: Get SDL2 devel mingw
         run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz && cd SDL2-2.0.22
       - name: Install SDL2
-        run: sudo make install-package
+        run: sudo make cross
       - name: Build Windows Version
         run: make windows -j$(nproc)
