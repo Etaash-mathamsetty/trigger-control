@@ -26,8 +26,8 @@ jobs:
       - name: Install deps
         run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget
       - name: Get SDL2 devel mingw
-        run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz && cd SDL2-2.0.22
+        run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz
       - name: Install SDL2
-        run: sudo make cross
+        run: cd SDL2-2.0.22 && sudo make cross
       - name: Build Windows Version
         run: make windows -j$(nproc)
