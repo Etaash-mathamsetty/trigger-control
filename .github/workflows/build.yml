@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install deps
-        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget
+        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget && sudo update-alternatives --config x86_64-w64-mingw32-g++
       - name: Get SDL2 devel mingw
         run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz
       - name: Install SDL2
