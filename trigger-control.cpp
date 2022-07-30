@@ -33,8 +33,6 @@ using namespace triggercontrol;
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
-
-
 const char *VERSION = "Version 1.5";
 char *CONFIG_PATH = new char[PATH_MAX];
 
@@ -67,7 +65,7 @@ void load_preset(uint8_t *rightEffects, uint8_t *leftEffects, const char *name)
 	}
 }
 
-void save_preset(const uint8_t *rightEffects,const uint8_t *leftEffects, const char *name)
+void save_preset(const uint8_t *rightEffects, const uint8_t *leftEffects, const char *name)
 {
 	create_config_path_dir();
 	std::string path = std::string(CONFIG_PATH) + name + ".txt";
@@ -75,8 +73,8 @@ void save_preset(const uint8_t *rightEffects,const uint8_t *leftEffects, const c
 	if (!f)
 		return;
 	fseek(f, 0, SEEK_SET);
-	fwrite(rightEffects, sizeof(*rightEffects),7, f);
-	fwrite(leftEffects, sizeof(*leftEffects),7, f);
+	fwrite(rightEffects, sizeof(*rightEffects), 7, f);
+	fwrite(leftEffects, sizeof(*leftEffects), 7, f);
 	fclose(f);
 }
 
@@ -115,7 +113,7 @@ void CenteredText(const char *text)
 void error_sound()
 {
 #ifdef __linux__
-	//unfortunately this is not going to work on anything other than gnome
+	// unfortunately this is not going to work on anything other than gnome
 	/*g_autofree gchar *name = g_build_filename(g_get_user_data_dir(), "sounds", "__custom", NULL);
 	g_autofree gchar *path = g_build_filename(name, "bell-terminal.ogg", NULL);
 	Mix_Chunk *sound = Mix_LoadWAV((const char *)path);
@@ -236,10 +234,11 @@ bool check_valid(std::string path)
 	return true;
 }
 
-void center_window(){		
+void center_window()
+{
 	ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
-	_pos.x -= ImGui::GetWindowWidth() / 2; 
-	_pos.y -= ImGui::GetWindowHeight() / 2; 
+	_pos.x -= ImGui::GetWindowWidth() / 2;
+	_pos.y -= ImGui::GetWindowHeight() / 2;
 	ImGui::SetWindowPos(_pos);
 }
 
@@ -287,7 +286,6 @@ int main(int argc, char **argv)
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
 	bool export_preset = false;
-	// bool preset_load_exists = false;
 	char name[100];
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -320,9 +318,9 @@ int main(int argc, char **argv)
 	printf("dpi scaling: %f\n", dpi_scaling);
 	ImGui::GetStyle().ScaleAllSizes(dpi_scaling);
 	SDL_RenderSetScale(renderer, dpi_scaling, dpi_scaling);
-	//float x,y,z;
-	//SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window),&x,&y,&z);
-	//std::cout << "dpi: " << x << "," << y <<  "," << z << std::endl;
+	// float x,y,z;
+	// SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window),&x,&y,&z);
+	// std::cout << "dpi: " << x << "," << y <<  "," << z << std::endl;
 #ifdef _WIN32
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
@@ -372,7 +370,7 @@ int main(int argc, char **argv)
 	fileDialog.SetTitle("Choose Preset");
 	fileDialog.SetTypeFilters({".txt"});
 	fileDialog2.SetTitle("Where do you want to export the preset?");
-	
+
 	while (running)
 	{
 
@@ -389,9 +387,9 @@ int main(int argc, char **argv)
 				SDL_GetWindowSize(window, &width, &height);
 			}
 		}
-#define APPLY()                                                 \
-	ds::reset_all(handle); \
-	std::this_thread::sleep_for(std::chrono::milliseconds(70)); \
+#define APPLY()                                                          \
+	ds::reset_all(handle);                                               \
+	std::this_thread::sleep_for(std::chrono::milliseconds(70));          \
 	ds::apply_effect(handle, ds::triggers::left, leftMode, leftEffects); \
 	ds::apply_effect(handle, ds::triggers::right, rightMode, rightEffects)
 
@@ -436,7 +434,7 @@ int main(int argc, char **argv)
 					fileDialog.Open();
 					memset(name, 0, sizeof(name));
 				}
-				if(ImGui::MenuItem("Export Preset"))
+				if (ImGui::MenuItem("Export Preset"))
 				{
 					fileDialog2.Open();
 					memset(name, 0, sizeof(name));
@@ -520,7 +518,7 @@ int main(int argc, char **argv)
 				if (std::find(options.begin(), options.end(), __name) == options.end())
 				{
 					std::filesystem::copy(path, CONFIG_PATH);
-					load_preset(rightEffects,leftEffects, __name.c_str());
+					load_preset(rightEffects, leftEffects, __name.c_str());
 					APPLY();
 				}
 				else
@@ -543,21 +541,24 @@ int main(int argc, char **argv)
 		{
 			ImGui::OpenPopup("Export Preset");
 		}
-		if(ImGui::BeginPopup("Export Preset", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
-				center_window();
-				std::vector<std::string> options;
-				get_presets(options);
-				ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
-				if(ImGui::Button("Export")){
-					std::string path = fileDialog2.GetSelected().string();
-					if(std::filesystem::exists(path + options[preset_index] + ".txt")){
-						std::filesystem::remove(path + options[preset_index] + ".txt");
-					}
-					std::filesystem::copy(CONFIG_PATH + options[preset_index] + ".txt", path);
-					export_preset = false;
-					ImGui::CloseCurrentPopup();
+		if (ImGui::BeginPopup("Export Preset", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+		{
+			center_window();
+			std::vector<std::string> options;
+			get_presets(options);
+			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
+			if (ImGui::Button("Export"))
+			{
+				std::string path = fileDialog2.GetSelected().string();
+				if (std::filesystem::exists(path + options[preset_index] + ".txt"))
+				{
+					std::filesystem::remove(path + options[preset_index] + ".txt");
 				}
-				ImGui::EndPopup();
+				std::filesystem::copy(CONFIG_PATH + options[preset_index] + ".txt", path);
+				export_preset = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
 			fileDialog2.ClearSelected();
 		}
 		// load_preset(outReport,);
@@ -674,7 +675,7 @@ int main(int argc, char **argv)
 			ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
 			if ((ImGui::Button("Load") || SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_Y)) && options.size() > 0)
 			{
-				load_preset(rightEffects,leftEffects, options[preset_index].c_str());
+				load_preset(rightEffects, leftEffects, options[preset_index].c_str());
 				right_cur = get_index(rightMode);
 				left_cur = get_index(leftMode);
 				APPLY();
@@ -701,7 +702,7 @@ int main(int argc, char **argv)
 			ImGui::Text("This Preset Already Exists! Are You Sure You Want To Overwrite It?");
 			if (ImGui::Button("Yes"))
 			{
-				save_preset(rightEffects,leftEffects, name);
+				save_preset(rightEffects, leftEffects, name);
 				save_preset_open = false;
 				ImGui::CloseCurrentPopup();
 				preset_exists = false;
