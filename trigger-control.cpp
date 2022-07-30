@@ -544,6 +544,7 @@ int main(int argc, char **argv)
 			ImGui::OpenPopup("Export Preset");
 		}
 		if(ImGui::BeginPopup("Export Preset", ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)){
+				center_window();
 				std::vector<std::string> options;
 				get_presets(options);
 				ImGui::Combo("Presets", &preset_index, VectorOfStringGetter, &options, options.size());
