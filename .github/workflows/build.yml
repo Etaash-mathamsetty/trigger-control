@@ -10,12 +10,12 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install deps
-        run: sudo apt install -y libsdl2-dev
+        run: sudo apt update && sudo apt install -y libsdl2-dev
       - name: Build on Linux
         run: make -j$(nproc)
       - name: Upload linux binary
@@ -25,12 +25,12 @@ jobs:
             path: trigger-control
             retention-days: 14
   build-win:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install deps
-        run: sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget && sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+        run: sudo apt update && sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools wget && sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
       - name: Get SDL2 devel mingw
         run: wget https://github.com/libsdl-org/SDL/releases/download/release-2.0.22/SDL2-devel-2.0.22-mingw.tar.gz && tar -xvf SDL2-devel-2.0.22-mingw.tar.gz
       - name: Install SDL2
