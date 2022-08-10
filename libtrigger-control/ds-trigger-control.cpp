@@ -16,6 +16,8 @@ namespace triggercontrol
             if (SDL_NumJoysticks() < 1)
                 return -1;
 
+            assert(handle);
+
             for (int i = 0; i < SDL_NumJoysticks(); i++)
             {
                 if (SDL_IsGameController(i))
