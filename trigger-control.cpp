@@ -244,6 +244,11 @@ void center_window()
 
 int main(int argc, char **argv)
 {
+	SDL_version sdl_version;
+	SDL_GetVersion(&sdl_version);
+	if(sdl_verison.minor == 0 && sdl_version.patch < 14){
+		std::cerr << "YOUR SDL VERSION IS TOO OLD!" << std::endl;	
+	}
 	memset(CONFIG_PATH, 0, PATH_MAX);
 #ifdef __linux__
 	strcpy(CONFIG_PATH, getenv("HOME"));
@@ -259,9 +264,11 @@ int main(int argc, char **argv)
 	memset(config, 0, config_size);
 #ifdef __linux__
 #if SDL_VERSION_ATLEAST(2, 0, 22)
-	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
-	SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
-	printf("running in wayland mode!\n");
+	if(sdl_version.minor > 0 || sdl_version.patch >= 22){
+		SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
+		SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
+		std::cout << "running in wayland mode!" << std::endl;
+	}
 #endif
 #endif
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
@@ -625,11 +632,16 @@ int main(int argc, char **argv)
 			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
 			{
 				ImGui::ColorPicker3("Light Color", light_colors);
-				ImGui::SliderInt("Player Number", &player, 1, 4);
+				if(sdl_verison.minor >= 24){
+					ImGui::SliderInt("Player Number", &player, 0, 4);
+				}
+				else{
+					ImGui::SliderInt("Player Number", &player, 1, 4);
+				}
 				if (ImGui::Button("Apply"))
 				{
 					SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
-					SDL_GameControllerSetPlayerIndex(handle, 0);
+					SDL_GameControllerSetPlayerIndex(handle, player-1);
 				}
 				ImGui::EndTabItem();
 			}
