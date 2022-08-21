@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 {
 	SDL_version sdl_version;
 	SDL_GetVersion(&sdl_version);
-	if(sdl_verison.minor == 0 && sdl_version.patch < 14){
+	if(sdl_version.minor == 0 && sdl_version.patch < 14){
 		std::cerr << "YOUR SDL VERSION IS TOO OLD!" << std::endl;	
 	}
 	memset(CONFIG_PATH, 0, PATH_MAX);
@@ -632,7 +632,7 @@ int main(int argc, char **argv)
 			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
 			{
 				ImGui::ColorPicker3("Light Color", light_colors);
-				if(sdl_verison.minor >= 24){
+				if(sdl_version.minor >= 24){
 					ImGui::SliderInt("Player Number", &player, 0, 4);
 				}
 				else{
