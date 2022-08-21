@@ -267,7 +267,6 @@ int main(int argc, char **argv)
 	if(sdl_version.minor > 0 || sdl_version.patch >= 22){
 		SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 		SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
-		std::cout << "running in wayland mode!" << std::endl;
 	}
 #endif
 #endif
@@ -276,6 +275,7 @@ int main(int argc, char **argv)
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 620, WindowFlags);
+	std::cout << "running using " << SDL_GetCurrentVideoDriver() << " video driver" << std::endl;
 	SDL_SetWindowMinimumSize(window, 500, 400);
 	int height = 0, width = 0;
 	SDL_GetWindowSize(window, &width, &height);
