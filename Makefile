@@ -1,7 +1,7 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 OBJS = trigger-control.o imgui/imgui.o imgui/imgui_impl_sdlrenderer.o imgui/imgui_impl_sdl.o imgui/imgui_demo.o imgui/imgui_impl_win32.o imgui/imgui_draw.o imgui/imgui_tables.o imgui/imgui_widgets.o libtrigger-control/ds-trigger-control.o
-LIBRARIES = `pkg-config --libs --cflags sdl2`
+LIBRARIES = `pkg-config --libs --cflags sdl2` `pkg-config --libs --cflags dbus-1`
 CFLAGS = -Wall -std=c++17
 
 

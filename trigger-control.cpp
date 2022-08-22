@@ -10,6 +10,8 @@
 #include "icon.h"
 #ifdef __linux__
 #include <linux/limits.h>
+#include <dbus/dbus.h>
+#include <optional>
 #endif
 #ifdef _WIN32
 #include <windows.h>
@@ -242,12 +244,127 @@ void center_window()
 	ImGui::SetWindowPos(_pos);
 }
 
+#ifdef __linux__
+
+template <typename T>
+std::optional<T> get_dbus_property(DBusConnection *con, const char *path, const char *property, const char *interface)
+{
+	DBusMessage *msg = dbus_message_new_method_call("org.bluez", path, "org.freedesktop.DBus.Properties", "Get");
+	DBusMessageIter args;
+	dbus_message_iter_init_append(msg, &args);
+	dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &interface);
+	dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &property);
+	DBusError err;
+	dbus_error_init(&err);
+	DBusMessage *reply = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "Failed to get dbus property! " << err.message << std::endl;
+		return {};
+	}
+	dbus_message_unref(msg);
+	DBusMessageIter iter;
+	DBusMessageIter va_iter;
+	dbus_message_iter_init(reply, &iter);
+	dbus_message_iter_recurse(&iter, &va_iter);
+	T value;
+	dbus_message_iter_get_basic(&va_iter, &value);
+	dbus_message_unref(reply);
+	return value;
+}
+
+std::optional<std::string> find_dualsense(SDL_GameController *controller)
+{
+	DBusError err;
+	dbus_error_init(&err);
+	DBusConnection *con = NULL;
+	con = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to connect to dbus system bus" << err.message << std::endl;
+		return {};
+	}
+	DBusMessage *msg = dbus_message_new_method_call("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
+	DBusMessage *reply = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
+	dbus_message_unref(msg);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to get managed objects " << err.message << std::endl;
+		return {};
+	}
+	DBusMessageIter dict;
+	dbus_message_iter_init(reply, &dict);
+	DBusMessageIter dict_entry;
+	dbus_message_iter_recurse(&dict, &dict_entry);
+	DBusMessageIter dict_kv;
+	while (dbus_message_iter_get_arg_type(&dict_entry) != DBUS_TYPE_INVALID)
+	{
+		dbus_message_iter_recurse(&dict_entry, &dict_kv);
+		char *path;
+		dbus_message_iter_get_basic(&dict_kv, &path);
+		dbus_message_iter_next(&dict_kv);
+		DBusMessageIter iface_entry;
+		dbus_message_iter_recurse(&dict_kv, &iface_entry);
+		DBusMessageIter iface_kv;
+		while (dbus_message_iter_get_arg_type(&iface_entry) != DBUS_TYPE_INVALID)
+		{
+			dbus_message_iter_recurse(&iface_entry, &iface_kv);
+			char *value;
+			dbus_message_iter_get_basic(&iface_kv, &value);
+			if (!strcmp(value, "org.bluez.Device1"))
+			{
+				std::string serial = SDL_GameControllerGetSerial(controller);
+				for (char &c : serial)
+				{
+					c = toupper(c);
+					if (c == '-')
+						c = ':';
+				}
+				auto connected = get_dbus_property<bool>(con, path, "Connected", "org.bluez.Device1");
+				auto value = get_dbus_property<char *>(con, path, "Address", "org.bluez.Device1");
+				if (value.has_value() && connected.has_value() && *connected && serial == *value)
+				{
+					// std::cout << "found dualsense controller at: " << path << std::endl;
+					return std::string(path);
+				}
+			}
+			dbus_message_iter_next(&iface_entry);
+		}
+		dbus_message_iter_next(&dict_entry);
+	}
+	dbus_message_unref(reply);
+	dbus_connection_unref(con);
+	return {};
+}
+
+bool disconnect_dualsense(std::string path)
+{
+	DBusError err;
+	dbus_error_init(&err);
+	DBusConnection *con = NULL;
+	con = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+	DBusMessage *msg = dbus_message_new_method_call("org.bluez", path.c_str(), "org.bluez.Device1", "Disconnect");
+	DBusMessage *reply = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
+	dbus_message_unref(msg);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to disconnect device: " << err.message << std::endl;
+		return false;
+	}
+	dbus_message_unref(reply);
+	dbus_connection_unref(con);
+	return true;
+}
+
+#endif
+
 int main(int argc, char **argv)
 {
 	SDL_version sdl_version;
 	SDL_GetVersion(&sdl_version);
-	if(sdl_version.minor == 0 && sdl_version.patch < 14){
-		std::cerr << "YOUR SDL VERSION IS TOO OLD!" << std::endl;	
+	if (sdl_version.minor == 0 && sdl_version.patch < 14)
+	{
+		std::cerr << "YOUR SDL VERSION IS TOO OLD!" << std::endl;
 	}
 	memset(CONFIG_PATH, 0, PATH_MAX);
 #ifdef __linux__
@@ -264,7 +381,8 @@ int main(int argc, char **argv)
 	memset(config, 0, config_size);
 #ifdef __linux__
 #if SDL_VERSION_ATLEAST(2, 0, 22)
-	if(sdl_version.minor > 0 || sdl_version.patch >= 22){
+	if (sdl_version.minor > 0 || sdl_version.patch >= 22)
+	{
 		SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1");
 		SDL_SetHint(SDL_HINT_VIDEODRIVER, "wayland,x11");
 	}
@@ -360,6 +478,9 @@ int main(int argc, char **argv)
 		std::cout << "error: " << SDL_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+#ifdef __linux__
+	auto dbus_dualsense_path = find_dualsense(handle);
+#endif
 	bool running = true;
 	uint8_t leftEffects[7] = {0};
 	ds::modes leftMode = ds::modes::Off;
@@ -456,6 +577,20 @@ int main(int argc, char **argv)
 					delete_preset_open = true;
 					memset(name, 0, sizeof(name));
 				}
+				if (ImGui::MenuItem("Exit"))
+				{
+					exit(EXIT_SUCCESS);
+				}
+#ifdef __linux__
+				if (dbus_dualsense_path.has_value())
+				{
+					if (ImGui::MenuItem("Exit And Turn Off Controller"))
+					{
+						disconnect_dualsense(*dbus_dualsense_path);
+						exit(EXIT_SUCCESS);
+					}
+				}
+#endif
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Tools"))
@@ -632,16 +767,18 @@ int main(int argc, char **argv)
 			if (ImGui::BeginTabItem("Light Control", nullptr, flags[1]))
 			{
 				ImGui::ColorPicker3("Light Color", light_colors);
-				if(sdl_version.minor >= 24){
+				if (sdl_version.minor >= 24)
+				{
 					ImGui::SliderInt("Player Number", &player, 0, 4);
 				}
-				else{
+				else
+				{
 					ImGui::SliderInt("Player Number", &player, 1, 4);
 				}
 				if (ImGui::Button("Apply"))
 				{
 					SDL_GameControllerSetLED(handle, light_colors[0] * UINT8_MAX, light_colors[1] * UINT8_MAX, light_colors[2] * UINT8_MAX);
-					SDL_GameControllerSetPlayerIndex(handle, player-1);
+					SDL_GameControllerSetPlayerIndex(handle, player - 1);
 				}
 				ImGui::EndTabItem();
 			}

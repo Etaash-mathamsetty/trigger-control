@@ -14,7 +14,8 @@ requirements:
 c++17 compiler   
 
 required libraries:  
-libSDL2 >= 2.0.14 
+libSDL2 >= 2.0.14  
+libdbus  
     
 
 optional:  
@@ -24,7 +25,7 @@ ttf-dejavu (better font)
 
 **installing them on arch linux (or any arch based distro):**  
 ```
-sudo pacman -S sdl2 base-devel libdecor ttf-dejavu
+sudo pacman -S sdl2 base-devel libdecor ttf-dejavu dbus
 ```  
 
 **How to compile**  
