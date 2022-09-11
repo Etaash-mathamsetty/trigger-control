@@ -281,7 +281,7 @@ std::optional<std::string> find_dualsense(SDL_GameController *controller)
 	con = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
 	if (dbus_error_is_set(&err))
 	{
-		std::cerr << "failed to connect to dbus system bus" << err.message << std::endl;
+		std::cerr << "failed to connect to dbus system bus " << err.message << std::endl;
 		return {};
 	}
 	DBusMessage *msg = dbus_message_new_method_call("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
