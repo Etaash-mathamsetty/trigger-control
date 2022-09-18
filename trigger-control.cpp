@@ -368,8 +368,15 @@ int main(int argc, char **argv)
 	}
 	memset(CONFIG_PATH, 0, PATH_MAX);
 #ifdef __linux__
-	strcpy(CONFIG_PATH, getenv("HOME"));
-	strcat(CONFIG_PATH, "/.config/trigger-control/");
+	const char *xdg_config_home = getenv("XDG_CONFIG_HOME");
+	if (xdg_config_home)
+		strcpy(CONFIG_PATH, xdg_config_home);
+	if (strlen(CONFIG_PATH) == 0)
+	{
+		strcpy(CONFIG_PATH, getenv("HOME"));
+		strcat(CONFIG_PATH, "/.config");
+	}
+	strcat(CONFIG_PATH, "/trigger-control/");
 #endif
 #ifdef _WIN32
 	strcpy(CONFIG_PATH, getenv("APPDATA"));
@@ -450,8 +457,7 @@ int main(int argc, char **argv)
 	std::string windir = getenv("WINDIR");
 	if (std::filesystem::exists(windir + "\\Fonts\\segoeui.ttf"))
 	{
-		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 36.0f, NULL, ranges.Data);
-		io.FontGlobalScale = 0.5f;
+		io.Fonts->AddFontFromFileTTF((windir + "\\Fonts\\segoeui.ttf").c_str(), 18.0f * dpi_scaling, NULL, ranges.Data);
 	}
 #endif
 #ifdef __linux__
@@ -462,8 +468,7 @@ int main(int argc, char **argv)
 			continue;
 		if (file.path().filename() == "DejaVuSans.ttf")
 		{
-			io.Fonts->AddFontFromFileTTF(file.path().c_str(), 36.0f, NULL, ranges.Data);
-			io.FontGlobalScale = 0.5f;
+			io.Fonts->AddFontFromFileTTF(file.path().c_str(), 18.0f * dpi_scaling, NULL, ranges.Data);
 			break;
 		}
 	}
@@ -640,6 +645,8 @@ int main(int argc, char **argv)
 			ImGui::OpenPopup("Options");
 		}
 		ImGui::SetNextWindowFocus();
+		// default is 700x450
+		fileDialog.SetWindowPos((width / 2) - (700 / 2), (height / 2) - (450 / 2));
 		fileDialog.Display();
 		if (fileDialog.HasSelected())
 		{
@@ -674,6 +681,8 @@ int main(int argc, char **argv)
 			}
 			fileDialog.ClearSelected();
 		}
+		ImGui::SetNextWindowFocus();
+		fileDialog2.SetWindowPos((width / 2) - (700 / 2), (height / 2) - (450 / 2));
 		fileDialog2.Display();
 		if (fileDialog2.HasSelected())
 		{

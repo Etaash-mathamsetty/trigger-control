@@ -333,10 +333,10 @@ inline void ImGui::FileBrowser::Display()
         if (posIsSet_)
             SetNextWindowPos(
                     ImVec2(static_cast<float>(posX_), static_cast<float>(posY_)),
-                    ImGuiCond_FirstUseEver);
+                    ImGuiCond_Always);
         SetNextWindowSize(
             ImVec2(static_cast<float>(width_), static_cast<float>(height_)),
-            ImGuiCond_FirstUseEver);
+            ImGuiCond_Always);
     }
     if(flags_ & ImGuiFileBrowserFlags_NoModal)
     {
