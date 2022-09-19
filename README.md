@@ -1,4 +1,5 @@
-# Trigger Control  
+# Trigger Control
+
 Dark Mode           |  Light Mode
 :-------------------------:|:-------------------------:
 ![image](https://user-images.githubusercontent.com/45927311/166091284-a06013df-f443-48a1-8e15-514690b43200.png) | ![image](https://user-images.githubusercontent.com/45927311/166091275-4f970e14-5a16-4f1e-b96b-4e823cdcfcae.png)
@@ -16,7 +17,9 @@ c++17 compiler
 required libraries:  
 libSDL2 >= 2.0.14  
 libdbus  
-    
+   
+Ubuntu 20.04's SDL version is too out of date for this project, for distros like linux mint 20, and zorin os 16,  
+you will have to manually compile SDL2 by yourself and point the pkg config path to the correct place  
 
 optional:  
 libSDL2 >= 2.0.22 (for wayland)  
@@ -60,7 +63,7 @@ sudo cp trigger-control /usr/bin
 **Cross Compile for Windows**  
 I recommend arch linux for this, but you can try your luck with any other distro  
 first, clone the repo, then run the following commands (with any AUR helper)  
-feel free to use the arch on WSL project to cross compile this for windows  
+feel free to use the [ArchWSL](https://github.com/yuk7/ArchWSL) project to cross compile this for windows  
 ```
 yay -S mingw-w64-pkg-config mingw-w64-sdl2 
 ```
