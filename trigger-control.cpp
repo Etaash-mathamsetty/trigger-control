@@ -369,9 +369,9 @@ int main(int argc, char **argv)
 	memset(CONFIG_PATH, 0, PATH_MAX);
 #ifdef __linux__
 	const char *xdg_config_home = getenv("XDG_CONFIG_HOME");
-	if (xdg_config_home)
+	if (xdg_config_home && std::filesystem::exists(xdg_config_home))
 		strcpy(CONFIG_PATH, xdg_config_home);
-	if (strlen(CONFIG_PATH) == 0)
+	else
 	{
 		strcpy(CONFIG_PATH, getenv("HOME"));
 		strcat(CONFIG_PATH, "/.config");
