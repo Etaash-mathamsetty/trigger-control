@@ -365,6 +365,7 @@ int main(int argc, char **argv)
 	if (sdl_version.minor == 0 && sdl_version.patch < 14)
 	{
 		std::cerr << "YOUR SDL VERSION IS TOO OLD!" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	memset(CONFIG_PATH, 0, PATH_MAX);
 #ifdef __linux__
