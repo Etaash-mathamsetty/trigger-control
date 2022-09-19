@@ -104,7 +104,7 @@ void read_config(char **value, size_t size)
 	fclose(f);
 }
 
-void CenteredText(const char *text)
+inline void CenteredText(const char *text)
 {
 	ImVec2 size = ImGui::GetWindowSize();
 	ImGui::SetCursorPosX((size.x - ImGui::CalcTextSize(text).x) / 2);
@@ -112,7 +112,7 @@ void CenteredText(const char *text)
 	ImGui::Text("%s", text);
 }
 
-void error_sound()
+inline void error_sound()
 {
 #ifdef __linux__
 	// unfortunately this is not going to work on anything other than gnome
@@ -127,7 +127,7 @@ void error_sound()
 #endif
 }
 
-ds::modes get_mode(int index)
+inline ds::modes get_mode(int index)
 {
 	switch (index)
 	{
@@ -155,7 +155,7 @@ ds::modes get_mode(int index)
 	return ds::modes::INVALID;
 }
 
-int get_index(ds::modes mode)
+inline int get_index(ds::modes mode)
 {
 	switch (mode)
 	{
@@ -236,7 +236,7 @@ bool check_valid(std::string path)
 	return true;
 }
 
-void center_window()
+inline void center_window()
 {
 	ImVec2 _pos = ImGui::GetMainViewport()->GetCenter();
 	_pos.x -= ImGui::GetWindowWidth() / 2;
