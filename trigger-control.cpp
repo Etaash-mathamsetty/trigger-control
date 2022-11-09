@@ -228,7 +228,18 @@ bool check_valid(std::string path)
 	FILE *f = fopen(path.c_str(), "rb");
 	uint8_t x = fgetc(f);
 	fclose(f);
-	const uint8_t valid_modes[9] = {0x0, 0x1, 0x2, 0x1 | 0x20, 0x1 | 0x04, 0x1 | 0x20 | 0x04, 0x2 | 0x20, 0x2 | 0x04, 0x2 | 0x20 | 0x04};
+	const uint8_t valid_modes[9] =
+	{
+		(uint8_t)ds::modes::Off,
+		(uint8_t)ds::modes::Rigid,
+		(uint8_t)ds::modes::Pulse,
+		(uint8_t)ds::modes::Rigid_A,
+		(uint8_t)ds::modes::Rigid_B,
+		(uint8_t)ds::modes::Rigid_AB,
+		(uint8_t)ds::modes::Pulse_A,
+		(uint8_t)ds::modes::Pulse_B,
+		(uint8_t)ds::modes::Pulse_AB
+	};
 	if (std::find(std::begin(valid_modes), std::end(valid_modes), x) == std::end(valid_modes))
 	{
 		return false;

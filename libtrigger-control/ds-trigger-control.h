@@ -22,7 +22,7 @@ namespace triggercontrol
 			Pulse_A = 0x2 | 0x20,
 			Pulse_B = 0x2 | 0x04,
 			Pulse_AB = 0x2 | 0x20 | 0x04,
-			INVALID = 0xFFFF
+			INVALID = 0xFF
 		};
 
 		enum class triggers
