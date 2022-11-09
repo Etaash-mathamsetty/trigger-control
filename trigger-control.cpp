@@ -430,6 +430,8 @@ int main(int argc, char **argv)
 	bool options_open = false;
 	bool controller_navigation_help_open = false;
 	bool export_preset = false;
+	bool last_left_shoulder = false;
+	bool last_right_shoulder = false;
 	char name[100];
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -728,14 +730,17 @@ int main(int argc, char **argv)
 		const int num_tabs = 2;
 		bool left_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
 		bool right_shoulder = SDL_GameControllerGetButton(handle, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-		if (left_shoulder && cur_tab > 0)
+		if (left_shoulder && !last_left_shoulder)
 		{
 			cur_tab--;
 		}
-		if (right_shoulder && cur_tab < num_tabs - 1)
+		if (right_shoulder && !last_right_shoulder)
 		{
 			cur_tab++;
 		}
+		last_left_shoulder = left_shoulder;
+		last_right_shoulder = right_shoulder;
+		cur_tab = ((cur_tab < 0) ? num_tabs - 1 : cur_tab % num_tabs);
 		if (ImGui::BeginTabBar("tabs"))
 		{
 			ImGuiTabItemFlags flags[num_tabs] = {ImGuiTabBarFlags_None};
