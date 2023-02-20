@@ -485,13 +485,17 @@ int main(int argc, char **argv)
 	(void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+#ifdef __linux__
 	if(!std::filesystem::exists(std::string(CONFIG_PATH) + "config.ini"))
 	{
 		read_config(&config, config_size);
 		config[0] = prefer_dark();
 	}
 	else
-		read_config(&config, config_size);
+#endif
+	
+	read_config(&config, config_size);
 	if (config[0])
 		ImGui::StyleColorsDark();
 	else
@@ -565,6 +569,7 @@ int main(int argc, char **argv)
 	int player = 1;
 	int cur_tab = 0;
 
+#ifdef __linux__
 	notify_init("Trigger Control");
 
 	SDL_Joystick* joy = SDL_GameControllerGetJoystick(handle);
@@ -594,6 +599,8 @@ int main(int argc, char **argv)
 			}
 		}
 	}, joy, &running, pixbuf);
+
+#endif 
 
 	ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_NoTitleBar);
 	ImGui::FileBrowser fileDialog2(ImGuiFileBrowserFlags_NoTitleBar | ImGuiFileBrowserFlags_SelectDirectory);
