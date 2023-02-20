@@ -17,6 +17,7 @@ c++17 compiler
 required libraries:  
 libSDL2 >= 2.0.14  
 libdbus  
+libnotify (low controller battery notification)  
    
 Ubuntu 20.04's SDL version is too out of date for this project, for distros like linux mint 20, and zorin os 16,  
 you will have to manually compile SDL2 by yourself and point the pkg config path to the correct place  

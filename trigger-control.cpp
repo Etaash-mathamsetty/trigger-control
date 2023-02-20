@@ -12,6 +12,8 @@
 #include <linux/limits.h>
 #include <dbus/dbus.h>
 #include <optional>
+#include <libnotify/notification.h>
+#include <libnotify/notify.h>
 #endif
 #ifdef _WIN32
 #include <windows.h>
@@ -354,6 +356,11 @@ bool disconnect_dualsense(std::string path)
 	dbus_error_init(&err);
 	DBusConnection *con = NULL;
 	con = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to connect to dbus system bus " << err.message << std::endl;
+		return false;
+	}
 	DBusMessage *msg = dbus_message_new_method_call("org.bluez", path.c_str(), "org.bluez.Device1", "Disconnect");
 	DBusMessage *reply = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
 	dbus_message_unref(msg);
@@ -365,6 +372,45 @@ bool disconnect_dualsense(std::string path)
 	dbus_message_unref(reply);
 	dbus_connection_unref(con);
 	return true;
+}
+
+bool prefer_dark()
+{
+	const char* interface = "org.freedesktop.appearance";
+	const char* key = "color-scheme";
+	DBusError err;
+	dbus_error_init(&err);
+	DBusConnection *con = NULL;
+	con = dbus_bus_get(DBUS_BUS_SESSION, &err);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to connect to dbus session bus " << err.message << std::endl;
+		return 0;
+	}
+	DBusMessage *msg = dbus_message_new_method_call("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", "org.freedesktop.portal.Settings", "Read");
+	DBusMessageIter args;
+	dbus_message_iter_init_append(msg, &args);
+	dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &interface);
+	dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &key);
+	DBusMessage *reply = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
+	dbus_message_unref(msg);
+	if (dbus_error_is_set(&err))
+	{
+		std::cerr << "failed to read color-scheme: " << err.message << std::endl;
+		return 0;
+	}
+	DBusMessageIter iter;
+	DBusMessageIter variant;
+	DBusMessageIter variant2;
+	dbus_message_iter_init(reply, &iter);
+	/* There's a variant inside a variant for some reason */
+	dbus_message_iter_recurse(&iter, &variant);
+	dbus_message_iter_recurse(&variant, &variant2);
+	uint ret_key = 0;
+	dbus_message_iter_get_basic(&variant2, &ret_key);
+	dbus_message_unref(reply);
+	dbus_connection_unref(con);
+	return ret_key == 1;
 }
 
 #endif
@@ -409,7 +455,7 @@ int main(int argc, char **argv)
 #endif
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5, "1");
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED, "1");
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK);
 	uint32_t WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_Window *window = SDL_CreateWindow("Trigger Controls", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 620, WindowFlags);
 	std::cout << "running using " << SDL_GetCurrentVideoDriver() << " video driver" << std::endl;
@@ -439,7 +485,13 @@ int main(int argc, char **argv)
 	(void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-	read_config(&config, config_size);
+	if(!std::filesystem::exists(std::string(CONFIG_PATH) + "config.ini"))
+	{
+		read_config(&config, config_size);
+		config[0] = prefer_dark();
+	}
+	else
+		read_config(&config, config_size);
 	if (config[0])
 		ImGui::StyleColorsDark();
 	else
@@ -512,6 +564,37 @@ int main(int argc, char **argv)
 	light_colors[2] = 70 / 255.0;
 	int player = 1;
 	int cur_tab = 0;
+
+	notify_init("Trigger Control");
+
+	SDL_Joystick* joy = SDL_GameControllerGetJoystick(handle);
+	GBytes* bytes = g_bytes_new(gimp_image.pixel_data, sizeof(gimp_image.pixel_data));
+	GdkPixbuf* pixbuf = gdk_pixbuf_new_from_bytes(bytes, GDK_COLORSPACE_RGB, true, 8, gimp_image.width, gimp_image.height, 4 * gimp_image.width);
+
+	std::thread thread([](SDL_Joystick* joy, bool* running, GdkPixbuf* pixbuf)
+	{ 
+		using namespace std::chrono_literals;
+		while(*running)
+		{
+			SDL_JoystickPowerLevel power_level = SDL_JoystickCurrentPowerLevel(joy);
+			if(power_level == SDL_JOYSTICK_POWER_LOW || power_level == SDL_JOYSTICK_POWER_EMPTY)
+			{
+				NotifyNotification* noti = notify_notification_new("Low Battery", "Your Controller's Battery is Low!", nullptr);
+				notify_notification_set_timeout(noti, NOTIFY_EXPIRES_DEFAULT);
+				notify_notification_set_image_from_pixbuf(noti, pixbuf);
+				notify_notification_show(noti, nullptr);
+				break;
+			}
+			auto start = std::chrono::high_resolution_clock::now();
+			while(std::chrono::high_resolution_clock::now() - start < 30s)
+			{
+				if(!*running)
+					break;
+				std::this_thread::sleep_for(100ms);
+			}
+		}
+	}, joy, &running, pixbuf);
+
 	ImGui::FileBrowser fileDialog(ImGuiFileBrowserFlags_NoTitleBar);
 	ImGui::FileBrowser fileDialog2(ImGuiFileBrowserFlags_NoTitleBar | ImGuiFileBrowserFlags_SelectDirectory);
 	fileDialog.SetTitle("Choose Preset");
@@ -991,6 +1074,7 @@ int main(int argc, char **argv)
 
 			ImGui::EndPopup();
 		}
+
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
@@ -1010,6 +1094,10 @@ int main(int argc, char **argv)
 	if (std::filesystem::exists("imgui.ini"))
 		std::filesystem::remove("imgui.ini");
 	write_config(config, config_size);
+
+	thread.join();
+
+	notify_uninit();
 	// program termination should free memory I forgot to free :D
 	return 0;
 }
