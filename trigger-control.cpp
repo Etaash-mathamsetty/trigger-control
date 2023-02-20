@@ -1102,9 +1102,11 @@ int main(int argc, char **argv)
 		std::filesystem::remove("imgui.ini");
 	write_config(config, config_size);
 
+#ifdef __linux__
 	thread.join();
 
 	notify_uninit();
+#endif
 	// program termination should free memory I forgot to free :D
 	return 0;
 }

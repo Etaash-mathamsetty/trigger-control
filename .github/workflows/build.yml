@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install deps
-        run: sudo apt update && sudo apt install -y libsdl2-dev
+        run: sudo apt update && sudo apt install -y libsdl2-dev libnotify-dev
       - name: Build on Linux
         run: make -j$(nproc)
       - name: Upload linux binary
