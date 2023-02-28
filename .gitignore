@@ -2,3 +2,4 @@
 *.o
 trigger-control
 trigger-control.exe
+.gdb_history

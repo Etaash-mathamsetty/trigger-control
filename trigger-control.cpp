@@ -326,7 +326,10 @@ std::optional<std::string> find_dualsense(SDL_GameController *controller)
 			dbus_message_iter_get_basic(&iface_kv, &value);
 			if (!strcmp(value, "org.bluez.Device1"))
 			{
-				std::string serial = SDL_GameControllerGetSerial(controller);
+				const char* _serial = SDL_GameControllerGetSerial(controller);
+				if(!_serial)
+					return {};
+				std::string serial = _serial;
 				for (char &c : serial)
 				{
 					c = toupper(c);
@@ -553,8 +556,13 @@ int main(int argc, char **argv)
 		std::cout << "error: " << SDL_GetError() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	SDL_Joystick* joy = SDL_GameControllerGetJoystick(handle);
+	/* update the controller before getting the power level to avoid getting an invalid value */
+	SDL_GameControllerUpdate();
 #ifdef __linux__
-	auto dbus_dualsense_path = find_dualsense(handle);
+	std::optional<std::string> dbus_dualsense_path = std::nullopt;
+	if(SDL_JoystickCurrentPowerLevel(joy) != SDL_JOYSTICK_POWER_WIRED)
+		dbus_dualsense_path = find_dualsense(handle);
 #endif
 	bool running = true;
 	uint8_t leftEffects[7] = {0};
@@ -564,21 +572,25 @@ int main(int argc, char **argv)
 	const char *states[9] = {"Off", "Rigid", "Pulse", "RigidA", "RigidB", "RigidAB", "PulseA", "PulseB", "PulseAB"};
 	int left_cur = 0;
 	int right_cur = 0;
-	float light_colors[3] = {0};
-	light_colors[2] = 70 / 255.0;
+	float light_colors[3] = {0, 0, 70.0f / 255.0f};
 	int player = 1;
 	int cur_tab = 0;
 
 #ifdef __linux__
 	notify_init("Trigger Control");
 
-	SDL_Joystick* joy = SDL_GameControllerGetJoystick(handle);
 	GBytes* bytes = g_bytes_new(gimp_image.pixel_data, sizeof(gimp_image.pixel_data));
 	GdkPixbuf* pixbuf = gdk_pixbuf_new_from_bytes(bytes, GDK_COLORSPACE_RGB, true, 8, gimp_image.width, gimp_image.height, 4 * gimp_image.width);
 
 	std::thread thread([](SDL_Joystick* joy, bool* running, GdkPixbuf* pixbuf)
 	{ 
 		using namespace std::chrono_literals;
+		using namespace std::chrono;
+		using namespace std;
+
+		if(SDL_JoystickCurrentPowerLevel(joy) == SDL_JOYSTICK_POWER_WIRED)
+			return;
+
 		while(*running)
 		{
 			SDL_JoystickPowerLevel power_level = SDL_JoystickCurrentPowerLevel(joy);
@@ -590,12 +602,12 @@ int main(int argc, char **argv)
 				notify_notification_show(noti, nullptr);
 				break;
 			}
-			auto start = std::chrono::high_resolution_clock::now();
-			while(std::chrono::high_resolution_clock::now() - start < 30s)
+			auto start = high_resolution_clock::now();
+			while(high_resolution_clock::now() - start <= 10s)
 			{
 				if(!*running)
 					break;
-				std::this_thread::sleep_for(100ms);
+				this_thread::sleep_for(100ms);
 			}
 		}
 	}, joy, &running, pixbuf);
