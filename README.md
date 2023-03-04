@@ -27,9 +27,9 @@ libSDL2 >= 2.0.22 (for wayland)
 libdecor (for wayland)  
 ttf-dejavu (better font)  
 
-**installing them on arch linux (or any arch based distro):**  
+**Installing them on arch linux (or any arch based distro):**  
 ```
-sudo pacman -S sdl2 base-devel libdecor ttf-dejavu dbus
+sudo pacman -S sdl2 base-devel libdecor ttf-dejavu dbus libnotify
 ```  
 
 **How to compile**  
@@ -38,12 +38,12 @@ sudo pacman -S sdl2 base-devel libdecor ttf-dejavu dbus
 make
 ```  
 
-**run**   
+**Run**   
 ```
 ./trigger-control
 ```  
 
-**install**  
+**Install**  
 install dependencies first
 ```
 git clone https://github.com/Etaash-mathamsetty/trigger-control.git
@@ -53,7 +53,7 @@ make
 sudo cp trigger-control /usr/bin
 ```
 
-**update**  
+**Update**  
 enter the directory in which you cloned this repo  
 ```
 git pull
