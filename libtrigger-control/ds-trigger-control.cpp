@@ -23,12 +23,9 @@ namespace triggercontrol
                 if (SDL_IsGameController(i))
                 {
                     *handle = SDL_GameControllerOpen(i);
-                    if (*handle)
+                    if (*handle && SDL_GameControllerGetType(*handle) == SDL_CONTROLLER_TYPE_PS5)
                     {
-                        if (SDL_GameControllerGetType(*handle) == SDL_CONTROLLER_TYPE_PS5)
-                        {
-                            return 0;
-                        }
+                        return 0;
                     }
                     else
                     {
