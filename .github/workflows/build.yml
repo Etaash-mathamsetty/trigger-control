@@ -19,7 +19,7 @@ jobs:
       - name: Build on Linux
         run: make -j$(nproc)
       - name: Upload linux binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
             name: amd64-binary
             path: trigger-control
