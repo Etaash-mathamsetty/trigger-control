@@ -35,7 +35,10 @@ sudo pacman -S sdl2 base-devel libdecor ttf-dejavu dbus libnotify
 **How to compile**  
 
 ```
-make
+mkdir build  
+cd build  
+cmake ..  
+make  
 ```  
 
 **Run**   
@@ -46,35 +49,39 @@ make
 **Install**  
 install dependencies first
 ```
-git clone https://github.com/Etaash-mathamsetty/trigger-control.git
-cd trigger-control
-chmod +x compile.sh
-make
-sudo cp trigger-control /usr/bin
+git clone https://github.com/Etaash-mathamsetty/trigger-control.git  
+cd trigger-control    
+mkdir build  
+cd build  
+cmake ..  
+make  
+sudo cp trigger-control /usr/bin  
 ```
 
 **Update**  
 enter the directory in which you cloned this repo  
 ```
-git pull
-make
-sudo cp trigger-control /usr/bin
+git pull  
+cd build    
+make   
+sudo cp trigger-control /usr/bin  
 ```
 
 **Cross Compile for Windows**  
 I recommend arch linux for this, but you can try your luck with any other distro  
-first, clone the repo, then run the following commands (with any AUR helper)  
+first, clone the repo, enter the directory it was cloned in, then run the following commands (with any AUR helper)  
 feel free to use the [ArchWSL](https://github.com/yuk7/ArchWSL) project to cross compile this for windows  
 ```
 yay -S mingw-w64-pkg-config mingw-w64-sdl2 
 ```
 then run,  
 ```
-make windows
+mkdir build-win  
+cd build-win  
+cmake -DCMAKE_TOOLCHAIN_FILE=../windows.cmake ..  
 ```
 you will get a .exe file as an output, but you won't be able to run it without copying the nessessary dll files, so copy  
 ```
-libwinpthread-1.dll  
 SDL2.dll
 ```
 from  
@@ -88,4 +95,4 @@ cross compiling is a pain
 win32 api sucks  
 programming on linux is kinda easy  
   
-based on https://github.com/flok/pydualsense  
+based on https://github.com/flok/pydualsense and DS4Windows  

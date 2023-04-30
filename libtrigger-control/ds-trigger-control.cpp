@@ -74,12 +74,10 @@ namespace triggercontrol
         int reset_all(SDL_GameController *handle)
         {
             assert(SDL_GameControllerGetType(handle) == SDL_CONTROLLER_TYPE_PS5);
-            // work around a gcc "bug"
-            uint8_t arr[7] = {0};
-            int err = triggercontrol::ds::apply_effect(handle, triggercontrol::ds::triggers::left, triggercontrol::ds::modes::Rigid_B, arr);
+            int err = triggercontrol::ds::reset(handle, triggercontrol::ds::triggers::left);
             if (err != 0)
                 return err;
-            return triggercontrol::ds::apply_effect(handle, triggercontrol::ds::triggers::right, triggercontrol::ds::modes::Rigid_B, arr);
+            return triggercontrol::ds::reset(handle, triggercontrol::ds::triggers::right);
         }
 
     };

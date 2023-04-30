@@ -17,12 +17,12 @@ jobs:
       - name: Install deps
         run: sudo apt update && sudo apt install -y libsdl2-dev libnotify-dev
       - name: Build on Linux
-        run: make -j$(nproc)
+        run: mkdir build && cd build && cmake .. && make -j$(nproc)
       - name: Upload linux binary
         uses: actions/upload-artifact@v3
         with:
             name: amd64-binary
-            path: trigger-control
+            path: build/trigger-control
             retention-days: 14
   build-win:
     runs-on: ubuntu-22.04
@@ -36,11 +36,11 @@ jobs:
       - name: Install SDL2
         run: sudo mkdir /usr/local/{i686,x86_64}-w64-mingw32 && cd SDL2-2.0.22 && sudo make cross
       - name: Build Windows Version
-        run: make windows -j$(nproc)
+        run: mkdir build-win && cd build-win && cmake -DCMAKE_TOOLCHAIN_FILE=../windows.cmake .. && make -j$(nproc)
       - name: Upload EXE
         uses: actions/upload-artifact@v2
         with:
             name: win-portable
-            path: trigger-control.exe
+            path: build-win/trigger-control.exe
             retention-days: 14
 

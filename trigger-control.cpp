@@ -390,7 +390,8 @@ bool prefer_dark()
 		std::cerr << "failed to connect to dbus session bus " << err.message << std::endl;
 		return 0;
 	}
-	DBusMessage *msg = dbus_message_new_method_call("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", "org.freedesktop.portal.Settings", "Read");
+	DBusMessage *msg = dbus_message_new_method_call("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", 
+													"org.freedesktop.portal.Settings", "Read");
 	DBusMessageIter args;
 	dbus_message_iter_init_append(msg, &args);
 	dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &interface);

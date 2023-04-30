@@ -3,3 +3,5 @@
 trigger-control
 trigger-control.exe
 .gdb_history
+build/
+build-win/
