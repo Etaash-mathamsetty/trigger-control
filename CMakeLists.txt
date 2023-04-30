@@ -10,6 +10,8 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     pkg_check_modules(NOTIFY REQUIRED libnotify)
 endif()
 
+link_directories(${DBUS_LIBRARY_DIRS} ${NOTIFY_LIBRARY_DIRS} ${SDL2_LIBRARY_DIRS})
+
 add_executable(trigger-control trigger-control.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui_widgets.cpp 
 ${CMAKE_SOURCE_DIR}/imgui/imgui_demo.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui_draw.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_sdl.cpp 
 ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_sdlrenderer.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui_tables.cpp ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_win32.cpp 
