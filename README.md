@@ -22,7 +22,12 @@ libnotify (low controller battery notification)
 Ubuntu 20.04's SDL version is too out of date for this project, for distros like linux mint 20, and zorin os 16,  
 you will have to manually compile SDL2 by yourself and point the pkg config path to the correct place  
 
-For Ubuntu 22.04 LTS:
+optional:  
+libSDL2 >= 2.0.22 (for wayland)  
+libdecor (for wayland)  
+ttf-dejavu (better font)
+
+**For Ubuntu 22.04 LTS:**
 ```
 sudo apt-get install cmake libsdl2-dev libnotify-dev
 mkdir build
@@ -30,11 +35,6 @@ cd build
 cmake ..
 make
 ```
-
-optional:  
-libSDL2 >= 2.0.22 (for wayland)  
-libdecor (for wayland)  
-ttf-dejavu (better font)  
 
 **Installing them on arch linux (or any arch based distro):**  
 ```
