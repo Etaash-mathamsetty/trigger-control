@@ -27,13 +27,9 @@ libSDL2 >= 2.0.22 (for wayland)
 libdecor (for wayland)  
 ttf-dejavu (better font)
 
-**For Ubuntu 22.04 LTS:**
+**Installing them For Ubuntu 22.04 LTS:**
 ```
 sudo apt-get install cmake libsdl2-dev libnotify-dev
-mkdir build
-cd build
-cmake ..
-make
 ```
 
 **Installing them on arch linux (or any arch based distro):**  
