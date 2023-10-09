@@ -48,7 +48,8 @@ void create_config_path_dir()
 #endif
 #ifdef _WIN32
 	// lmao windows with the wide char paths
-	std::wstring wc(std::string(CONFIG_PATH).begin(), std::string(CONFIG_PATH).end());
+	std::string path = std::string(CONFIG_PATH);
+	std::wstring wc(path.begin(), path.end());
 	if (!std::filesystem::is_directory(wc))
 		std::filesystem::create_directory(wc);
 #endif
