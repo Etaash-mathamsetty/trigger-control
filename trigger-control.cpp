@@ -37,7 +37,7 @@ using namespace triggercontrol;
 #error SDL2 version 2.0.14 or higher is required
 #endif
 
-const char *VERSION = "Version 1.5";
+const char *VERSION = "Version 1.5.1";
 char *CONFIG_PATH = new char[PATH_MAX];
 
 void create_config_path_dir()
@@ -48,7 +48,8 @@ void create_config_path_dir()
 #endif
 #ifdef _WIN32
 	// lmao windows with the wide char paths
-	std::wstring wc(std::string(CONFIG_PATH).begin(), std::string(CONFIG_PATH).end());
+	std::string path = std::string(CONFIG_PATH);
+	std::wstring wc(path.begin(), path.end());
 	if (!std::filesystem::is_directory(wc))
 		std::filesystem::create_directory(wc);
 #endif
