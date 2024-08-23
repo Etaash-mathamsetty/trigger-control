@@ -537,16 +537,17 @@ int main(int argc, char **argv)
 #endif
 #ifdef __linux__
 	// probably should work for all distros
-	for (auto file : std::filesystem::recursive_directory_iterator("/usr/share/fonts/"))
-	{
-		if (file.is_directory())
-			continue;
-		if (file.path().filename() == "DejaVuSans.ttf")
+	if(std::filesystem::exists("/usr/share/fonts"))
+		for (auto file : std::filesystem::recursive_directory_iterator("/usr/share/fonts/"))
 		{
-			io.Fonts->AddFontFromFileTTF(file.path().c_str(), 18.0f * dpi_scaling, NULL, ranges.Data);
-			break;
+			if (file.is_directory())
+				continue;
+			if (file.path().filename() == "DejaVuSans.ttf")
+			{
+				io.Fonts->AddFontFromFileTTF(file.path().c_str(), 18.0f * dpi_scaling, NULL, ranges.Data);
+				break;
+			}
 		}
-	}
 #endif
 	int preset_index = 0;
 	SDL_GameController *handle;
