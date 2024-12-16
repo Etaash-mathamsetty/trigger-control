@@ -19,7 +19,7 @@ jobs:
       - name: Build on Linux
         run: mkdir build && cd build && cmake .. && make -j$(nproc)
       - name: Upload linux binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
             name: amd64-binary
             path: build/trigger-control
@@ -38,7 +38,7 @@ jobs:
       - name: Build Windows Version
         run: mkdir build-win && cd build-win && cmake -DCMAKE_TOOLCHAIN_FILE=../windows.cmake .. && make -j$(nproc)
       - name: Upload EXE
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
             name: win-portable
             path: build-win/trigger-control.exe
